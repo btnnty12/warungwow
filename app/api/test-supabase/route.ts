@@ -3,36 +3,36 @@ import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
-    console.log("Test API: Starting...");
-    
-    // Test 1: Try to fetch from produk
-    const { data: produk, error: produkError } = await supabase.from("produk").select("*");
-    console.log("Produk result:", { produk, produkError });
-    
-    // Test 2: Try to fetch from kategori
-    const { data: kategori, error: kategoriError } = await supabase.from("kategori").select("*");
-    console.log("Kategori result:", { kategori, kategoriError });
-    
-    // Test 3: Try to list all tables
-    const { data: tables, error: tablesError } = await supabase
+    console.log("API Test: Memulai...");
+
+    // Tes 1: Mencoba mengambil dari produk
+    const { data: produk, error: errorProduk } = await supabase.from("produk").select("*");
+    console.log("Hasil produk:", { produk, errorProduk });
+
+    // Tes 2: Mencoba mengambil dari kategori
+    const { data: kategori, error: errorKategori } = await supabase.from("kategori").select("*");
+    console.log("Hasil kategori:", { kategori, errorKategori });
+
+    // Tes 3: Mencoba mengambil semua tabel
+    const { data: tabel, error: errorTabel } = await supabase
       .from("information_schema.tables")
       .select("table_name")
       .eq("table_schema", "public");
-    console.log("Tables result:", { tables, tablesError });
+    console.log("Hasil tabel:", { tabel, errorTabel });
 
     return NextResponse.json({
-      success: true,
+      berhasil: true,
       produk,
-      produkError,
+      errorProduk,
       kategori,
-      kategoriError,
-      tables,
-      tablesError,
+      errorKategori,
+      tabel,
+      errorTabel,
     });
   } catch (error) {
-    console.error("Test API: Unexpected error:", error);
+    console.error("API Test: Error tidak terduga:", error);
     return NextResponse.json({
-      success: false,
+      berhasil: false,
       error: String(error),
     });
   }

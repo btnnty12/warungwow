@@ -1,14 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ShoppingCart } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import type { Produk, Kategori } from "@/lib/types";
 
-export default async function Home() {
+export default async function Beranda() {
   // ================= AMBIL DATA DARI SUPABASE =================
-  const [{ data: produk }, { data: kategori }, { data: meja }] =
+  const [{ data: produk }, { data: kategori }] =
     await Promise.all([
       supabase.from("produk").select("*"),
       supabase.from("kategori").select("*"),
-      supabase.from("meja").select("*"),
     ]);
 
   return (
@@ -47,12 +48,7 @@ export default async function Home() {
             href="/keranjang"
             className="relative flex items-center justify-center"
           >
-            <Image
-              src="/ikon/cart.png"
-              alt="Keranjang"
-              width={34}
-              height={34}
-            />
+            <ShoppingCart size={34} className="text-black" />
             <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[11px] font-bold">
               2
             </span>
@@ -147,7 +143,7 @@ export default async function Home() {
                   />
                 ) : (
                   <div className="w-full h-[150px] flex items-center justify-center text-gray-400">
-                    No Image
+                    Tanpa Gambar
                   </div>
                 )}
               </div>

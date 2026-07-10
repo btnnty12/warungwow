@@ -1,23 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ShoppingCart, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import type { Kategori, Produk } from "@/lib/types";
+import PemilihMeja from "../komponen/PemilihMeja";
 
-export default async function MenuPage() {
+export default async function MenuPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ meja?: string }>;
+}) {
+  const params = await searchParams;
+  const initialMeja = params.meja || "A01"; // Temporary default for testing
+
   // ================= AMBIL DATA DARI SUPABASE =================
-  const [{ data: produk, error: produkError }, { data: kategori, error: kategoriError }] = await Promise.all([
+  const [
+    { data: produk, error: errorProduk },
+    { data: kategori, error: errorKategori },
+  ] = await Promise.all([
     supabase.from("produk").select("*"),
     supabase.from("kategori").select("*"),
   ]);
 
-  if (produkError) {
-    console.error("Error fetching produk:", produkError);
+  if (errorProduk) {
+    console.error("Error mengambil produk:", errorProduk);
   }
-  if (kategoriError) {
-    console.error("Error fetching kategori:", kategoriError);
+  if (errorKategori) {
+    console.error("Error mengambil kategori:", errorKategori);
   }
 
-  console.log("Produk data:", produk);
-  console.log("Kategori data:", kategori);
+  console.log("Data produk:", produk);
+  console.log("Data kategori:", kategori);
 
   return (
     <main className="min-h-screen bg-white">
@@ -55,13 +68,7 @@ export default async function MenuPage() {
             href="/keranjang"
             className="relative flex items-center justify-center"
           >
-            <Image
-              src="/ikon/cart.png"
-              alt="Keranjang"
-              width={34}
-              height={34}
-            />
-
+            <ShoppingCart size={34} className="text-black" />
             <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[11px] font-bold">
               2
             </span>
@@ -77,28 +84,14 @@ export default async function MenuPage() {
               placeholder="Cari makanan, minuman, atau produk Mayora..."
               className="w-full h-14 rounded-full border border-gray-400 placeholder:text-gray-300 shadow-sm pl-14 pr-6 outline-none focus:border-2 focus:border-[#2F54EB]"
             />
-
-            <Image
-              src="/ikon/search.png"
-              alt="Cari"
-              width={22}
-              height={22}
-              className="absolute left-5 top-1/2 -translate-y-1/2 opacity-50"
+            <Search
+              size={22}
+              className="absolute left-5 top-1/2 -translate-y-1/2 opacity-50 text-black"
             />
           </div>
         </div>
 
-        <div className="mt-8">
-          <button className="bg-[#2F54EB] text-white rounded-full px-5 py-3 flex items-center gap-3 shadow">
-            <Image
-              src="/ikon/meja.png"
-              alt="Meja"
-              width={18}
-              height={18}
-            />
-            <span className="font-semibold">No Meja</span>
-          </button>
-        </div>
+        <PemilihMeja initialMeja={initialMeja} />
 
         <div className="flex gap-5 mt-7 flex-wrap">
           {kategori?.map((item) => (
@@ -115,7 +108,6 @@ export default async function MenuPage() {
         <section className="mt-12">
           <div className="flex justify-between items-center">
             <h2 className="text-[20px] font-bold text-black">Best Seller</h2>
-
             <button className="flex items-center gap-2 text-[#2F54EB] font-semibold hover:underline">
               Lihat Semua
               <span>›</span>
@@ -139,7 +131,7 @@ export default async function MenuPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      No Image
+                      Tanpa Gambar
                     </div>
                   )}
                 </div>
@@ -149,12 +141,10 @@ export default async function MenuPage() {
                   <h3 className="text-[16px] font-semibold text-black truncate">
                     {item.nama_produk}
                   </h3>
-
                   <div className="flex justify-between items-end mt-2">
                     <p className="text-[#2F54EB] font-bold text-sm">
                       Rp {Number(item.harga)?.toLocaleString("id-ID")}
                     </p>
-
                     <button className="w-7 h-7 rounded-full bg-[#2F54EB] text-white flex items-center justify-center hover:bg-blue-700">
                       +
                     </button>
@@ -169,7 +159,6 @@ export default async function MenuPage() {
         <section className="mt-16">
           <div className="flex justify-between items-center">
             <h2 className="text-[20px] font-bold text-black">Menu</h2>
-
             <button className="flex items-center gap-2 text-[#2F54EB] font-semibold hover:underline">
               Lihat Semua
               <span>›</span>
@@ -193,7 +182,7 @@ export default async function MenuPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      No Image
+                      Tanpa Gambar
                     </div>
                   )}
                 </div>
@@ -203,12 +192,10 @@ export default async function MenuPage() {
                   <h3 className="text-[16px] font-semibold text-black truncate">
                     {item.nama_produk}
                   </h3>
-
                   <div className="flex justify-between items-center mt-3">
                     <p className="text-[#2F54EB] font-bold">
                       Rp {Number(item.harga)?.toLocaleString("id-ID")}
                     </p>
-
                     <button className="w-8 h-8 rounded-full bg-[#2F54EB] text-white font-bold hover:bg-blue-700 transition">
                       +
                     </button>
