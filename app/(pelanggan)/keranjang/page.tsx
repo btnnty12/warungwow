@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, ShieldCheck, Table2 } from "lucide-react";
 
 export default function KeranjangPage() {
   return (
@@ -138,9 +138,15 @@ export default function KeranjangPage() {
 
   {/* Tombol No Meja */}
   <div className="flex justify-end mb-5">
-    <button className="bg-[#2F54EB] text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-blue-700 transition">
-      No Meja
-    </button>
+  <button className="bg-[#2F54EB] text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-blue-700 transition flex items-center gap-4">
+    <Image
+      src="/meja.png"
+      alt="meja"
+      width={30}
+      height={30}
+    />
+    <span>No Meja</span>
+  </button>
   </div>
 
   {/* Kotak Ringkasan */}
@@ -167,32 +173,57 @@ export default function KeranjangPage() {
 
     <hr />
 
-    <div className="mt-8">
+    {/* ================= CATATAN ================= */}
+<div className="mt-8">
+  <label
+    htmlFor="catatan"
+    className="block text-base font-semibold text-black mb-3"
+  >
+    Catatan
+  </label>
+
+  <textarea
+    id="catatan"
+    rows={3}
+    placeholder="Tambahkan catatan untuk pesanan Anda..."
+    className="w-full resize-none rounded-2xl border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F54EB] focus:border-[#2F54EB]"
+  />
+</div>
+
+    <div className="mt-6">
       <h3 className="text-xl font-bold text-black">
         Total Pembayaran
       </h3>
 
-      <p className="text-4xl text-[#2F54EB] font-bold mt-2">
+      <p className="text-3xl text-[#2F54EB] font-bold mt-2">
         Rp92.000
       </p>
     </div>
 
-    <button className="w-full mt-8 bg-[#2F54EB] text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition">
-      Pesan Sekarang
-    </button>
+<button className="w-full mt-8 bg-[#2F54EB] text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition">
+  Pesan Sekarang
+</button>
 
-    <Link href="/menu">
-      <button className="w-full mt-4 border-2 border-[#2F54EB] text-[#2F54EB] py-4 rounded-2xl font-bold hover:bg-blue-50 transition">
-        Lanjut Belanja
-      </button>
-    </Link>
+{/* Transaksi Aman */}
+<div className="flex items-center justify-center gap-2 mt-5">
+  <ShieldCheck
+    size={18}
+    strokeWidth={2}
+    style={{ color: "#22C55E" }}
+  />
+  <span className="text-sm font-medium text-black">
+    Transaksi aman & terpercaya
+  </span>
+</div>
 
   </div>
 
 </div>
 
       </section>
+      <section className="max-w-6xl mx-auto flex gap-8 mt-10"></section>
 
     </main>
+  
   );
 }
