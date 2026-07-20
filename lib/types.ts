@@ -7,6 +7,14 @@ export type Meja = {
   diperbarui_pada?: string;
 };
 
+export type ItemKeranjang = {
+  produk_id: number;
+  nama_produk: string;
+  harga: number;
+  gambar?: string;
+  jumlah: number;
+};
+
 export type Kategori = {
   id: number;
   nama_kategori: string;
@@ -20,7 +28,7 @@ export type Produk = {
   nama_produk?: string;
   deskripsi?: string;
   gambar?: string;
-  harga?: number | string;
+  harga?: number;
   stok?: number;
   status?: string;
   dibuat_pada?: string;
