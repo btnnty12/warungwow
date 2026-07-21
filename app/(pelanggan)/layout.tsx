@@ -2,6 +2,7 @@
 
 import { ToastProvider } from "./komponen/Toast";
 import { KeranjangIconProvider } from "./komponen/KeranjangIconContext";
+import { KeranjangProvider } from "@/lib/useKeranjang";
 
 export default function Layout({
   children,
@@ -9,8 +10,10 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <KeranjangIconProvider>
-      <ToastProvider>{children}</ToastProvider>
-    </KeranjangIconProvider>
+    <KeranjangProvider>
+      <KeranjangIconProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </KeranjangIconProvider>
+    </KeranjangProvider>
   );
 }
