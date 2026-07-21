@@ -41,10 +41,9 @@ export default function DetailPesanan({ items, totalHarga }: DetailPesananProps)
         const harga = typeof item.harga === "string" ? parseFloat(item.harga) : item.harga || 0;
         const subtotal = harga * item.jumlah;
         return (
-          <div key={item.id || index} className="grid grid-cols-12 items-center py-3">
+          <div key={item.produk_id || index} className="grid grid-cols-12 items-center py-3">
             <div className="col-span-1">
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center">
-                {item.gambar ? (
+          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-orange-200 to-orange-400 flex items-center justify-center">                {item.gambar ? (
                   <Image
                     src={item.gambar}
                     alt={item.nama_produk || "Produk"}

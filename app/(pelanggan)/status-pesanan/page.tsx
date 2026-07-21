@@ -3,12 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, FileText, Table } from "lucide-react";
+import { useKeranjang } from "@/lib/useKeranjang";
+import { useMeja } from "@/lib/useMeja";
 import DetailPesanan from "../komponen/DetailPesanan";
 import TimelinePesanan from "../komponen/TimelinePesanan";
 import KitchenStatus from "../komponen/KitchenStatus";
 
 export default function StatusPesananPage() {
   const { keranjang, totalHarga, kosongkanKeranjang } = useKeranjang();
+  const { nomorMeja } = useMeja();
 
   // Fallback ke contoh data jika keranjang kosong
   const displayItems = keranjang.length > 0 ? keranjang : [
@@ -80,11 +83,7 @@ export default function StatusPesananPage() {
           {/* Badge Meja */}
           <div className="bg-[#2F54EB] rounded-full px-5 py-2 flex items-center gap-2">
             <Table size={24} className="text-white" />
-            <span className="text-white font-semibold text-sm">
-              {typeof window !== "undefined"
-                ? localStorage.getItem("nomorMeja") || "No Meja"
-                : "No Meja"}
-            </span>
+            <span className="text-white font-semibold text-sm">{nomorMeja}</span>
           </div>
         </div>
 

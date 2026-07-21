@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Trash2, ShieldCheck, ShoppingCart } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useKeranjang } from "@/lib/useKeranjang";
+import { useMeja } from "@/lib/useMeja";
 import KeranjangNavbar from "../komponen/KeranjangNavbar";
 
 export default function KeranjangPage() {
@@ -17,6 +19,7 @@ export default function KeranjangPage() {
     hapusDariKeranjang,
     kosongkanKeranjang,
   } = useKeranjang();
+  const { nomorMeja } = useMeja();
 
   // Dummy data for testing if keranjang is empty
   const displayItems = keranjang.length > 0 ? keranjang : [];
@@ -36,27 +39,19 @@ export default function KeranjangPage() {
       <nav className="w-full border-b border-gray-100 bg-white">
         <div className="max-w-6xl mx-auto h-24 flex items-center justify-between">
           {/* Kiri */}
-          <div className="flex items-center">
-            {/* Logo */}
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="Warung WOW"
-                width={120}
-                height={90}
-                priority
-              />
-            </Link>
-
-            {/* Tulisan Keranjang */}
-            <h1 className="ml-20 text-3xl font-bold text-[#2F54EB]">Keranjang</h1>
+          <div className="flex items-center gap-6">
+            <Image
+              src="/logo.png"
+              alt="Warung WOW"
+              width={120}
+              height={90}
+              priority
+            />
+            <h1 className="text-3xl font-bold text-[#2F54EB]">Keranjang</h1>
           </div>
 
           {/* Tengah (Posisinya sama seperti Beranda & Menu) */}
-          <div
-            className="flex items-center gap-14"
-            style={{ transform: "translateX(-450px)" }}
-          >
+          <div className="flex items-center gap-14">
             <Link
               href="/"
               className="font-semibold text-black hover:text-[#2F54EB]"
@@ -197,11 +192,7 @@ export default function KeranjangPage() {
           <div className="flex justify-end mb-5">
             <div className="bg-[#2F54EB] text-white px-6 py-3 rounded-full font-semibold shadow-md flex items-center gap-4">
               <ShoppingCart size={30} />
-              <span>
-                {typeof window !== "undefined"
-                  ? localStorage.getItem("nomorMeja") || "No Meja"
-                  : "No Meja"}
-              </span>
+              <span>{nomorMeja}</span>
             </div>
           </div>
 

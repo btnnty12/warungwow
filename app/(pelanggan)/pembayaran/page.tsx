@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, FileText, Table } from "lucide-react";
 import { useKeranjang } from "@/lib/useKeranjang";
+import { useMeja } from "@/lib/useMeja";
 import DetailPesanan from "../komponen/DetailPesanan";
 import QrisPayment from "../komponen/QrisPayment";
 import TimelinePesanan from "../komponen/TimelinePesanan";
@@ -11,6 +12,7 @@ import KitchenStatus from "../komponen/KitchenStatus";
 
 export default function PembayaranPage() {
   const { keranjang, totalHarga } = useKeranjang();
+  const { nomorMeja } = useMeja();
 
   // Fallback ke contoh data jika keranjang kosong
   const displayItems = keranjang.length > 0 ? keranjang : [
@@ -87,11 +89,7 @@ export default function PembayaranPage() {
               width={24}
               height={24}
             />
-            <span className="text-white font-semibold text-sm">
-              {typeof window !== "undefined"
-                ? localStorage.getItem("nomorMeja") || "No Meja"
-                : "No Meja"}
-            </span>
+            <span className="text-white font-semibold text-sm">{nomorMeja}</span>
           </div>
         </div>
 

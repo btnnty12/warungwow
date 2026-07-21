@@ -27,7 +27,7 @@ export type Produk = {
   kategori_id?: number;
   nama_produk?: string;
   deskripsi?: string;
-  gambar?: string;
+  gambar?: string| null;
   harga?: number;
   stok?: number;
   status?: string;

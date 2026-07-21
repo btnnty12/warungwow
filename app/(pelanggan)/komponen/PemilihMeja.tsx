@@ -1,27 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useMeja } from "@/lib/useMeja";
 
 type PemilihMejaProps = {
   initialMeja?: string;
 };
 
 export default function PemilihMeja({ initialMeja }: PemilihMejaProps) {
-  const [nomorMeja, setNomorMeja] = useState<string>("");
-
-  // Memuat dari initialMeja (searchParams) atau localStorage saat komponen dipasang
-  useEffect(() => {
-    if (initialMeja) {
-      setNomorMeja(initialMeja);
-      localStorage.setItem("nomorMeja", initialMeja);
-    } else {
-      const mejaTersimpan = localStorage.getItem("nomorMeja");
-      if (mejaTersimpan) {
-        setNomorMeja(mejaTersimpan);
-      }
-    }
-  }, [initialMeja]);
+const { nomorMeja, setNomorMeja } = useMeja();
 
   return (
     <div className="mt-8">
