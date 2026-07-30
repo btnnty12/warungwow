@@ -3,6 +3,7 @@
 import { ToastProvider } from "./komponen/Toast";
 import { KeranjangIconProvider } from "./komponen/KeranjangIconContext";
 import { KeranjangProvider } from "@/lib/useKeranjang";
+import { RiwayatPesananProvider } from "@/lib/useRiwayatPesanan";
 
 export default function Layout({
   children,
@@ -11,9 +12,11 @@ export default function Layout({
 }) {
   return (
     <KeranjangProvider>
-      <KeranjangIconProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </KeranjangIconProvider>
+      <RiwayatPesananProvider>
+        <KeranjangIconProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </KeranjangIconProvider>
+      </RiwayatPesananProvider>
     </KeranjangProvider>
   );
 }

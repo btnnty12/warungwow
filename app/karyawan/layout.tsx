@@ -8,7 +8,6 @@ import {
   Home,
   BookOpen,
   ClipboardList,
-  Package,
   LogOut,
   User,
   Menu,
@@ -19,7 +18,6 @@ const menuItems = [
   { href: "/karyawan", label: "Beranda", icon: Home, exact: true },
   { href: "/karyawan/menu", label: "Menu", icon: BookOpen },
   { href: "/karyawan/pesanan", label: "Pesanan", icon: ClipboardList },
-  { href: "/karyawan/stok", label: "Stok", icon: Package },
   { href: "/login", label: "Keluar", icon: LogOut, logout: true },
 ];
 

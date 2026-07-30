@@ -1,12 +1,90 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ShieldCheck,
+  LogIn,
+  AlertCircle,
+} from "lucide-react";
+
+type Role = "manager" | "karyawan";
+
+const AKUN_DEFAULT: Record<Role, { email: string; password: string }> = {
+  manager: {
+    email: "manager@warungwow.id",
+    password: "manager123",
+  },
+  karyawan: {
+    email: "karyawan@warungwow.id",
+    password: "karyawan123",
+  },
+};
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [role, setRole] = useState<Role>("manager");
+  const [email, setEmail] = useState(AKUN_DEFAULT[role].email);
+  const [password, setPassword] = useState(AKUN_DEFAULT[role].password);
+  const [lihatPassword, setLihatPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const pilihRole = (r: Role) => {
+    setRole(r);
+    setEmail(AKUN_DEFAULT[r].email);
+    setPassword(AKUN_DEFAULT[r].password);
+    setError(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    setTimeout(() => {
+      const acc = AKUN_DEFAULT[role];
+      const emailOk = email.trim().toLowerCase() === acc.email.toLowerCase();
+      const passOk = password === acc.password;
+
+      if (!emailOk || !passOk) {
+        setError(
+          `Email atau password salah. Gunakan ${acc.email} / ${acc.password} untuk role ${role}.`
+        );
+        setLoading(false);
+        return;
+      }
+
+      try {
+        localStorage.setItem(
+          "auth_user",
+          JSON.stringify({
+            role,
+            email: acc.email,
+            nama: role === "manager" ? "Manager" : "Karyawan",
+            loginPada: Date.now(),
+          })
+        );
+      } catch {}
+
+      router.push(`/${role}`);
+      setLoading(false);
+    }, 450);
+  };
+
   return (
-    <div className="min-h-screen flex bg-[#E8F5E9] p-4">
-      {/* Container Utama yang Nyatu */}
-      <div className="flex flex-col md:flex-row w-full bg-white rounded-2xl overflow-hidden shadow-lg">
-        {/* Bagian Kiri: Gambar (desktop) & Header Gambar (mobile) */}
-        <div className="w-full md:w-1/2 h-48 md:h-auto relative">
+    <div className="min-h-screen flex bg-[#E8F5E9] p-3 sm:p-4 sm:p-6">
+      <div className="flex flex-col md:flex-row w-full max-w-6xl mx-auto bg-white rounded-2xl overflow-hidden shadow-xl">
+        {/* Bagian Kiri: Gambar */}
+        <div className="w-full md:w-1/2 h-44 sm:h-52 md:h-auto relative">
           <Image
             src="/login.png"
             alt="Warung WOW"
@@ -14,110 +92,198 @@ export default function LoginPage() {
             className="object-cover"
             priority
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#558B2F]/70 via-transparent md:from-[#558B2F]/30 to-transparent" />
+          <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 text-white max-w-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Link href="/" className="bg-white/90 rounded-xl p-1.5 shadow">
+                <Image
+                  src="/logo.png"
+                  alt="Warung WOW"
+                  width={38}
+                  height={38}
+                />
+              </Link>
+              <div>
+                <p className="font-extrabold text-lg sm:text-xl tracking-tight">
+                  Warung WOW
+                </p>
+                <p className="text-[11px] sm:text-xs opacity-90">
+                  Nusantara Rasa, Harga Bersahabat
+                </p>
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm opacity-95 leading-relaxed hidden sm:block">
+              Selamat datang kembali! Kelola operasional warung dan layani
+              pelanggan dengan lebih cepat.
+            </p>
+          </div>
         </div>
 
         {/* Bagian Kanan: Form Login */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-8">
+        <div className="w-full md:w-1/2 flex items-center justify-center p-5 sm:p-6 md:p-8">
           <div className="w-full max-w-md">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-[#558B2F]">LOGIN</h1>
-              <p className="text-gray-500 text-lg mt-2">Masuk untuk Melanjutkan</p>
+            <div className="text-center mb-5 sm:mb-6">
+              <h1 className="text-3xl sm:text-4xl font-bold text-[#558B2F] tracking-tight">
+                LOGIN
+              </h1>
+              <p className="text-gray-500 text-sm sm:text-base mt-1.5">
+                Masuk untuk Melanjutkan
+              </p>
             </div>
 
-            <form className="space-y-6">
-              {/* Pilih Role */}
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+              {/* Quick Role Pill */}
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(AKUN_DEFAULT) as Role[]).map((r) => {
+                  const aktif = role === r;
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => pilihRole(r)}
+                      className={`px-3 py-2.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-1.5 border-2 ${
+                        aktif
+                          ? "bg-[#558B2F] text-white border-[#558B2F] shadow-md"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-[#558B2F]/50 hover:bg-green-50"
+                      }`}
+                    >
+                      <User size={15} />
+                      {r === "manager" ? "Manager" : "Karyawan"}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Pilih Role (select) */}
               <div>
-                <label className="block text-base font-semibold text-black mb-2">
+                <label className="block text-sm font-semibold text-black mb-1.5">
                   Pilih Role
                 </label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600">
+                    <User size={20} />
                   </div>
-                  <select className="w-full pl-14 pr-4 py-4 border-2 border-[#558B2F] rounded-xl text-lg font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#558B2F] appearance-none cursor-pointer">
+                  <select
+                    value={role}
+                    onChange={(e) => pilihRole(e.target.value as Role)}
+                    className="w-full pl-12 pr-10 py-3 border-2 border-[#558B2F] rounded-xl text-base font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#558B2F] focus:ring-opacity-40 appearance-none cursor-pointer"
+                  >
                     <option value="manager">Manager</option>
                     <option value="karyawan">Karyawan</option>
                   </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-[#558B2F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#558B2F]">
+                    <ChevronDown size={18} />
                   </div>
                 </div>
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-base font-semibold text-black mb-2">
+                <label className="block text-sm font-semibold text-black mb-1.5">
                   Email
                 </label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600">
+                    <Mail size={20} />
                   </div>
                   <input
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Masukkan Email"
-                    className="w-full pl-14 pr-4 py-4 border-2 border-gray-300 rounded-xl text-lg font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F] focus:border-[#558B2F]"
+                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-xl text-base font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F] focus:ring-opacity-40 focus:border-[#558B2F]"
                   />
                 </div>
+                <p className="mt-1.5 text-[11px] sm:text-xs text-gray-500 flex items-center gap-1">
+                  <ShieldCheck size={12} className="text-[#558B2F]" />
+                  Default: <code className="bg-gray-100 rounded px-1.5 py-0.5 ml-0.5 font-mono">{AKUN_DEFAULT[role].email}</code>
+                </p>
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-base font-semibold text-black mb-2">
+                <label className="block text-sm font-semibold text-black mb-1.5">
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600">
+                    <Lock size={20} />
                   </div>
                   <input
-                    type="password"
+                    type={lihatPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Masukkan password"
-                    className="w-full pl-14 pr-12 py-4 border-2 border-gray-300 rounded-xl text-lg font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F] focus:border-[#558B2F]"
+                    className="w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-xl text-base font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F] focus:ring-opacity-40 focus:border-[#558B2F]"
                   />
                   <button
                     type="button"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                    onClick={() => setLihatPassword((v) => !v)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition"
+                    aria-label={lihatPassword ? "Sembunyikan password" : "Tampilkan password"}
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-                    </svg>
+                    {lihatPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                <p className="mt-1.5 text-[11px] sm:text-xs text-gray-500 flex items-center gap-1">
+                  <ShieldCheck size={12} className="text-[#558B2F]" />
+                  Default: <code className="bg-gray-100 rounded px-1.5 py-0.5 ml-0.5 font-mono">{AKUN_DEFAULT[role].password}</code>
+                </p>
               </div>
 
-              {/* Ingat Saya & Lupa Password */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="remember" className="w-5 h-5 border-2 border-gray-300 rounded" />
-                  <label htmlFor="remember" className="text-base font-semibold text-black">
-                    Ingat Saya
-                  </label>
+              {/* Error */}
+              {error && (
+                <div className="flex items-start gap-2 px-3.5 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs sm:text-sm">
+                  <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                  <span>{error}</span>
                 </div>
-                <button type="button" className="text-[#558B2F] font-semibold hover:underline">
-                  Lupa Password ?
+              )}
+
+              {/* Ingat Saya & Lupa Password */}
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <label className="flex items-center gap-2 text-black font-semibold cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 rounded text-[#558B2F] focus:ring-[#558B2F]"
+                  />
+                  Ingat Saya
+                </label>
+                <button
+                  type="button"
+                  onClick={() => pilihRole(role)}
+                  className="text-[#558B2F] font-semibold hover:underline"
+                >
+                  Isi otomatis?
                 </button>
               </div>
 
               {/* Tombol Masuk */}
               <button
                 type="submit"
-                className="w-full bg-[#558B2F] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#33691E] transition"
+                disabled={loading}
+                className={`w-full bg-[#558B2F] text-white py-3.5 rounded-xl font-bold text-base hover:bg-[#33691E] transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-md`}
               >
-                Masuk
+                {loading ? (
+                  <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <LogIn size={18} />
+                    Masuk
+                  </>
+                )}
               </button>
+
+              {/* Kembali ke Beranda */}
+              <Link
+                href="/"
+                className="block w-full text-center text-[#558B2F] font-semibold text-xs sm:text-sm hover:underline py-1"
+              >
+                ← Kembali ke Beranda Pelanggan
+              </Link>
             </form>
 
-            {/* Footer */}
-            <div className="mt-6 text-center text-gray-500 font-semibold text-lg">
+            <div className="mt-5 sm:mt-6 text-center text-gray-400 font-semibold text-[11px] sm:text-xs">
               @ 2026 warung wow. All right reserved
             </div>
           </div>

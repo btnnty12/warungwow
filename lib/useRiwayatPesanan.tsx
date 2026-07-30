@@ -1,0 +1,111 @@
+"use client";
+
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { ItemKeranjang } from "./types";
+
+export type RiwayatPesanan = {
+  id: string;
+  nomorMeja: string;
+  items: ItemKeranjang[];
+  subtotal: number;
+  pajak: number;
+  biayaLayanan: number;
+  total: number;
+  status: string;
+  dibuatPada: number;
+};
+
+type RiwayatContextType = {
+  riwayat: RiwayatPesanan[];
+  simpanRiwayat: (p: Omit<RiwayatPesanan, "id" | "dibuatPada">) => RiwayatPesanan;
+  pesanLagi: (id: string) => void;
+  hapusRiwayat: (id: string) => void;
+  updateStatus: (id: string, status: string) => void;
+  pesananTerbaru: RiwayatPesanan | null;
+};
+
+const RiwayatContext = createContext<RiwayatContextType | undefined>(undefined);
+const STORAGE_KEY = "riwayat_pesanan";
+const KERANJANG_KEY = "keranjang";
+
+export function RiwayatPesananProvider({ children }: { children: ReactNode }) {
+  const [riwayat, setRiwayat] = useState<RiwayatPesanan[]>([]);
+
+  useEffect(() => {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      try {
+        setRiwayat(JSON.parse(data));
+      } catch {
+        setRiwayat([]);
+      }
+    }
+  }, []);
+
+  const persist = (list: RiwayatPesanan[]) => {
+    setRiwayat(list);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  };
+
+  const simpanRiwayat: RiwayatContextType["simpanRiwayat"] = (p) => {
+    const id = `WOW${Date.now().toString().slice(-8)}`;
+    const baru: RiwayatPesanan = {
+      ...p,
+      id,
+      dibuatPada: Date.now(),
+    };
+    persist([baru, ...riwayat].slice(0, 30));
+    return baru;
+  };
+
+  const pesanLagi = (id: string) => {
+    const target = riwayat.find((r) => r.id === id);
+    if (!target || target.items.length === 0) return;
+    const baruKeranjang: ItemKeranjang[] = target.items.map((i) => ({
+      produk_id: i.produk_id,
+      nama_produk: i.nama_produk,
+      harga: typeof i.harga === "number" ? i.harga : Number(i.harga) || 0,
+      gambar: i.gambar,
+      jumlah: i.jumlah,
+    }));
+    localStorage.setItem(KERANJANG_KEY, JSON.stringify(baruKeranjang));
+    if (typeof window !== "undefined") {
+      window.location.href = "/keranjang";
+    }
+  };
+
+  const hapusRiwayat = (id: string) => {
+    persist(riwayat.filter((r) => r.id !== id));
+  };
+
+  const updateStatus = (id: string, status: string) => {
+    persist(
+      riwayat.map((r) => (r.id === id ? { ...r, status } : r))
+    );
+  };
+
+  const pesananTerbaru = riwayat.length > 0 ? riwayat[0] : null;
+
+  return (
+    <RiwayatContext.Provider
+      value={{
+        riwayat,
+        simpanRiwayat,
+        pesanLagi,
+        hapusRiwayat,
+        updateStatus,
+        pesananTerbaru,
+      }}
+    >
+      {children}
+    </RiwayatContext.Provider>
+  );
+}
+
+export function useRiwayatPesanan() {
+  const ctx = useContext(RiwayatContext);
+  if (!ctx) {
+    throw new Error("useRiwayatPesanan must be used within RiwayatPesananProvider");
+  }
+  return ctx;
+}
