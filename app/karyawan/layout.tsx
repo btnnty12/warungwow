@@ -5,19 +5,22 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
-  Home,
+  ChefHat,
   BookOpen,
-  ClipboardList,
+  ClipboardCheck,
+  Package,
   LogOut,
   User,
   Menu,
   X,
+  Timer,
 } from "lucide-react";
 
 const menuItems = [
-  { href: "/karyawan", label: "Beranda", icon: Home, exact: true },
+  { href: "/karyawan", label: "Antrian Masak", icon: ChefHat, exact: true },
   { href: "/karyawan/menu", label: "Menu", icon: BookOpen },
-  { href: "/karyawan/pesanan", label: "Pesanan", icon: ClipboardList },
+  { href: "/karyawan/pesanan", label: "Semua Pesanan", icon: ClipboardCheck },
+  { href: "/karyawan/stok", label: "Stok", icon: Package },
   { href: "/login", label: "Keluar", icon: LogOut, logout: true },
 ];
 
@@ -28,6 +31,20 @@ export default function KaryawanLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const isActive = (item: (typeof menuItems)[number]) => {
+    if (item.exact) return pathname === item.href;
+    return pathname.startsWith(item.href);
+  };
+
+  const onClickNav = (item: (typeof menuItems)[number]) => {
+    if (item.logout) {
+      try {
+        localStorage.removeItem("auth_user");
+      } catch {}
+    }
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -52,64 +69,79 @@ export default function KaryawanLayout({
         />
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-60 lg:w-56 xl:w-60 bg-[#558B2F] flex flex-col shadow-xl z-50 rounded-tr-2xl rounded-br-2xl transform transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0`}
-      >
-        <div className="p-4 pb-2 flex items-center justify-between lg:block">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Warung WOW" width={42} height={42} />
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-3 py-1 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = item.exact
-              ? pathname === item.href
-              : pathname?.startsWith(item.href);
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? "bg-yellow-300 text-black font-bold shadow-sm"
-                    : "text-white hover:bg-white/10"
-                }`}
-              >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                <span className="text-sm lg:text-base">{item.label}</span>
+      <div className="flex pt-14 lg:pt-0">
+        {/* Sidebar */}
+        <aside
+          className={`fixed lg:sticky top-0 left-0 h-screen z-50 lg:z-30 w-60 flex-shrink-0 bg-[#558B2F] text-white transition-transform duration-300 shadow-xl ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="h-14 lg:h-16 flex items-center justify-between px-4 border-b border-white/10">
+              <Link href="/karyawan" className="flex items-center gap-2">
+                <Image
+                  src="/logo.png"
+                  alt="Warung WOW"
+                  width={42}
+                  height={42}
+                  className="rounded-full"
+                />
+                <span className="font-extrabold text-xl tracking-tight hidden sm:block">
+                  Warung WOW
+                </span>
               </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-3 mt-auto border-t border-white/20">
-          <div className="flex items-center gap-2.5 px-1.5 py-1.5">
-            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#558B2F] flex-shrink-0">
-              <User size={18} />
+              <button
+                className="lg:hidden w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X size={18} />
+              </button>
             </div>
-            <div>
-              <p className="font-bold text-white text-sm">Karyawan</p>
+
+            {/* Menu */}
+            <nav className="flex-1 pt-4 px-3 space-y-1 overflow-y-auto">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const aktif = isActive(item);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => onClickNav(item)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
+                      aktif
+                        ? "bg-[#FBC02D] text-gray-800 shadow"
+                        : "text-white/90 hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon size={20} className="flex-shrink-0" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Footer User */}
+            <div className="p-3 border-t border-white/15">
+              <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/10">
+                <div className="w-9 h-9 rounded-full bg-white text-[#558B2F] flex items-center justify-center flex-shrink-0">
+                  <User size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-white">Karyawan</p>
+                  <p className="text-[10px] text-white/70 flex items-center gap-1">
+                    <Timer size={10} /> Karyawan Aktif
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* Main Content */}
-      <main className="pt-14 lg:pt-0 lg:ml-56 xl:ml-60 p-3 sm:p-4 lg:p-5 min-h-screen">
-        {children}
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 w-full p-4 sm:p-5">{children}</main>
+      </div>
     </div>
   );
 }
