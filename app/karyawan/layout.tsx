@@ -13,7 +13,6 @@ import {
   Menu,
   X,
   Timer,
-  Package,
   Loader2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -205,7 +204,6 @@ export default function KaryawanLayout({
                 return (
                   <Wrapper
                     key={item.href}
-                    // @ts-expect-error polymorphic wrapper
                     href={item.href}
                     onClick={item.logout ? handleLogout : () => onClickNav(item)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
