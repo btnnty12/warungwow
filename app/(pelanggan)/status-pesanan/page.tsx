@@ -17,7 +17,6 @@ import { useRiwayatPesanan, RiwayatPesanan } from "@/lib/useRiwayatPesanan";
 import { useMeja } from "@/lib/useMeja";
 import DetailPesanan from "../komponen/DetailPesanan";
 import TimelinePesanan from "../komponen/TimelinePesanan";
-import KitchenStatus from "../komponen/KitchenStatus";
 import { useState } from "react";
 
 const statusStyle: Record<string, string> = {
@@ -317,9 +316,6 @@ export default function StatusPesananPage() {
                   <div className="col-span-7">
                     <TimelinePesanan />
                   </div>
-                  <div className="col-span-5">
-                    <KitchenStatus />
-                  </div>
                 </div>
               </>
             ) : (
@@ -352,9 +348,6 @@ export default function StatusPesananPage() {
                 <div className="grid grid-cols-12 gap-3 sm:gap-4">
                   <div className="col-span-7">
                     <TimelinePesanan />
-                  </div>
-                  <div className="col-span-5">
-                    <KitchenStatus />
                   </div>
                 </div>
               </>

@@ -7,9 +7,19 @@ import type { ItemKeranjang } from "@/lib/types";
 type DetailPesananProps = {
   items: ItemKeranjang[];
   totalHarga: number;
+  orderCode?: string;
+  orderDate?: string;
 };
 
-export default function DetailPesanan({ items, totalHarga }: DetailPesananProps) {
+export default function DetailPesanan({
+  items,
+  totalHarga,
+  orderCode,
+  orderDate,
+}: DetailPesananProps) {
+  const displayOrderCode = orderCode || `WOW${Date.now().toString().slice(-6)}`;
+  const displayOrderDate = orderDate ? new Date(orderDate) : new Date();
+
   return (
     <div className="border border-gray-200 rounded-2xl p-6 shadow-lg">
       <h2 className="text-2xl font-bold text-[#2F54EB] flex items-center gap-2 mb-4">
@@ -18,12 +28,13 @@ export default function DetailPesanan({ items, totalHarga }: DetailPesananProps)
       </h2>
 
       <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-        <span className="font-bold text-lg">
-          Order #WOW{Date.now().toString().slice(-6)}
-        </span>
+        <span className="font-bold text-lg">Order #{displayOrderCode}</span>
         <span className="text-gray-500 text-sm">
-          {new Date().toLocaleDateString("id-ID")} |{" "}
-          {new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+          {displayOrderDate.toLocaleDateString("id-ID")} |{" "}
+          {displayOrderDate.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </span>
       </div>
 

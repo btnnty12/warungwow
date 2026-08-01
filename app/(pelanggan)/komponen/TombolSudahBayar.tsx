@@ -1,12 +1,42 @@
-'use client';
+"use client";
 
-export default function TombolSudahBayar() {
-  const handleKlik = () => {
-    const target = document.getElementById('status-pesanan');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+import { supabase } from "@/lib/supabase";
+
+interface Props {
+  pesananId: number;
+}
+
+export default function TombolSudahBayar({ pesananId }: Props) {
+
+  const handleKlik = async () => {
+
+    const { error } = await supabase
+      .from("pesanan")
+      .update({
+        status_pembayaran: "berhasil",
+        diperbarui_pada: new Date().toISOString(),
+      })
+      .eq("id", pesananId);
+
+
+    if (error) {
+      console.error("Gagal update pembayaran:", error);
+      alert(error.message);
+      return;
     }
+
+
+    const target = document.getElementById("status-pesanan");
+
+    if (target) {
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+
   };
+
 
   return (
     <button

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   Home,
   BookOpen,
@@ -20,7 +21,7 @@ const menuItems = [
   { href: "/manager/menu", label: "Menu", icon: BookOpen },
   { href: "/manager/pesanan", label: "Pesanan", icon: ClipboardList },
   { href: "/manager/laporan", label: "Laporan", icon: FileText },
-  { href: "/login", label: "Keluar", icon: LogOut, logout: true },
+  { label: "Keluar", icon: LogOut, logout: true },
 ];
 
 export default function ManagerLayout({
@@ -28,8 +29,17 @@ export default function ManagerLayout({
 }: {
   children: React.ReactNode;
 }) {
+
+  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem("auth_user");
+    router.replace("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -75,15 +85,24 @@ export default function ManagerLayout({
         <nav className="flex-1 px-3 py-1 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = item.exact
-              ? pathname === item.href
-              : pathname?.startsWith(item.href);
+            const isActive = item.href
+              ? item.exact
+                ? pathname === item.href
+                : pathname?.startsWith(item.href)
+              : false;
             return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+            <Link
+              key={item.label}
+              href={item.logout ? "#" : item.href!}
+              onClick={(e) => {
+                setSidebarOpen(false);
+
+                if (item.logout) {
+                  e.preventDefault();
+                  handleLogout();
+                }
+              }}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                   isActive
                     ? "bg-yellow-300 text-black font-bold shadow-sm"
                     : "text-white hover:bg-white/10"

@@ -100,9 +100,9 @@ export default function ManagerPage() {
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-600 text-xs font-medium mb-0.5">{stat.title}</p>
+                  <p className="text-gray-700 text-xs font-semibold mb-0.5">{stat.title}</p>
                   <p className="text-lg font-bold text-gray-800 truncate">{stat.value}</p>
-                  {stat.subValue && <p className="text-gray-400 text-[10px] mt-0.5">{stat.subValue}</p>}
+                  {stat.subValue && <p className="text-gray-600 text-[10px] mt-0.5">{stat.subValue}</p>}
                   {stat.totalValue && <p className="text-sm font-semibold text-gray-800 mt-1">{stat.totalValue}</p>}
                   {stat.change && (
                     <div className="mt-1.5">
@@ -112,7 +112,7 @@ export default function ManagerPage() {
                           {stat.change}
                         </span>
                       </div>
-                      <p className="text-gray-400 text-[10px] mt-0.5">{stat.changeLabel}</p>
+                      <p className="text-gray-600 text-[10px] mt-0.5">{stat.changeLabel}</p>
                     </div>
                   )}
                 </div>
@@ -140,7 +140,7 @@ export default function ManagerPage() {
           <div className="relative h-44 sm:h-48">
             <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-2 pr-2">
               {["8M", "6M", "4M", "2M", "0"].map((l, i) => (
-                <span key={i} className="text-[10px] text-gray-400 text-right w-5">{l}</span>
+                <span key={i} className="text-[10px] text-gray-600 text-right w-5">{l}</span>
               ))}
             </div>
             <div className="ml-7 h-full relative">
@@ -172,10 +172,10 @@ export default function ManagerPage() {
           <div className="space-y-0.5">
             {topSellingProducts.map((p)=>(
               <div key={p.rank} className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-lg transition border-b border-gray-50 last:border-b-0">
-              <span className="text-gray-400 font-bold text-sm w-6 flex-shrink-0">{p.rank}</span>
+              <span className="text-gray-600 font-bold text-sm w-6 flex-shrink-0">{p.rank}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
-                <p className="text-gray-400 text-xs">{p.orders}</p>
+                <p className="text-gray-600 text-xs">{p.orders}</p>
               </div>
               <p className="font-bold text-gray-800 text-xs ml-2 flex-shrink-0">{p.total}</p>
             </div>
@@ -223,7 +223,7 @@ export default function ManagerPage() {
             <span className="px-3 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold w-fit">On Target</span>
           </div>
           <div className="p-3 border border-gray-200 rounded-xl mb-2">
-            <p className="text-gray-600 text-xs font-medium mb-2">Average Preparation Time</p>
+            <p className="text-gray-700 text-xs font-semibold mb-2">Average Preparation Time</p>
             <div className="flex flex-col sm:flex-row sm:items-end gap-2 mb-1">
               <p className="text-2xl font-bold text-gray-800">12m 45d</p>
               <div className="flex-1 h-16 relative w-full sm:w-auto">
@@ -232,7 +232,7 @@ export default function ManagerPage() {
                 </svg>
               </div>
             </div>
-            <p className="text-[10px] text-gray-400">Target: &lt; 15 menit</p>
+            <p className="text-[10px] text-gray-600">Target: &lt; 15 menit</p>
           </div>
           <div className="flex justify-between items-center px-1">
             <span className="text-xs text-gray-500">Orders Completed</span>

@@ -9,101 +9,18 @@ import {
   ClipboardList,
   ChevronDown,
   Check,
+  X,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  usePesananRealtime,
+  URUTAN_STATUS,
+  type Pesanan,
+  type StatusUI,
+} from "@/lib/use-pesanan-realtime";
 
-type StatusPesanan = "Diterima" | "Dibuat" | "Diantar" | "Selesai" | "Dibatalkan";
-
-type RowPesanan = {
-  no: string;
-  meja: string;
-  waktu: string;
-  items: Array<{ nama: string; qty: number }>;
-  total: number;
-  status: StatusPesanan;
-};
-
-const URUTAN_STATUS: StatusPesanan[] = [
-  "Diterima",
-  "Dibuat",
-  "Diantar",
-  "Selesai",
-];
-
-const DATA_AWAL: RowPesanan[] = [
-  {
-    no: "wow21120",
-    meja: "Meja C11",
-    waktu: "22 Juli 2026, 10:12",
-    items: [
-      { nama: "Nasi Goreng Spesial", qty: 1 },
-      { nama: "Es Teh Manis", qty: 1 },
-      { nama: "Tempe Goreng", qty: 1 },
-    ],
-    total: 30000,
-    status: "Diterima",
-  },
-  {
-    no: "wow21121",
-    meja: "Meja C11",
-    waktu: "22 Juli 2026, 10:12",
-    items: [
-      { nama: "Nasi Goreng Spesial", qty: 2 },
-      { nama: "Air Mineral", qty: 1 },
-    ],
-    total: 42000,
-    status: "Diantar",
-  },
-  {
-    no: "wow21122",
-    meja: "Meja A02",
-    waktu: "22 Juli 2026, 10:15",
-    items: [
-      { nama: "Ayam Geprek", qty: 1 },
-      { nama: "Nasi Putih", qty: 1 },
-      { nama: "Es Jeruk", qty: 1 },
-    ],
-    total: 36000,
-    status: "Dibuat",
-  },
-  {
-    no: "wow21131",
-    meja: "Meja A03",
-    waktu: "22 Juli 2026, 10:18",
-    items: [
-      { nama: "Soto Ayam", qty: 2 },
-      { nama: "Kerupuk", qty: 2 },
-      { nama: "Es Teh Tawar", qty: 2 },
-      { nama: "Tahu Goreng", qty: 2 },
-      { nama: "Sambal", qty: 2 },
-    ],
-    total: 125000,
-    status: "Diterima",
-  },
-  {
-    no: "wow21133",
-    meja: "Takeaway",
-    waktu: "22 Juli 2026, 10:21",
-    items: [
-      { nama: "Bakso Urat Besar", qty: 1 },
-      { nama: "Mie Ayam", qty: 1 },
-    ],
-    total: 48000,
-    status: "Dibuat",
-  },
-  {
-    no: "wow21140",
-    meja: "Meja B07",
-    waktu: "22 Juli 2026, 10:32",
-    items: [
-      { nama: "Nasi Campur", qty: 2 },
-      { nama: "Es Teh Manis", qty: 2 },
-    ],
-    total: 95000,
-    status: "Selesai",
-  },
-];
-
-const TABS: Array<{ key: "semua" | StatusPesanan; label: string }> = [
+const TABS: Array<{ key: "semua" | StatusUI; label: string }> = [
   { key: "semua", label: "Semua" },
   { key: "Diterima", label: "Diterima" },
   { key: "Dibuat", label: "Dibuat" },
@@ -112,7 +29,7 @@ const TABS: Array<{ key: "semua" | StatusPesanan; label: string }> = [
   { key: "Dibatalkan", label: "Dibatalkan" },
 ];
 
-const BADGE: Record<StatusPesanan, string> = {
+const BADGE: Record<StatusUI, string> = {
   Diterima: "bg-blue-50 text-blue-700 border border-blue-200",
   Dibuat: "bg-purple-50 text-purple-700 border border-purple-200",
   Diantar: "bg-yellow-50 text-yellow-700 border border-yellow-200",
@@ -121,56 +38,49 @@ const BADGE: Record<StatusPesanan, string> = {
 };
 
 export default function KaryawanPesananPage() {
-  const [data, setData] = useState<RowPesanan[]>(DATA_AWAL);
+  const {
+    pesanan,
+    loading,
+    error,
+    ringkasan,
+    refresh,
+    ubahStatus,
+    nextStatus,
+  } = usePesananRealtime();
+
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("semua");
   const [cari, setCari] = useState("");
-  const [lihat, setLihat] = useState<RowPesanan | null>(null);
-  const [openMenuNo, setOpenMenuNo] = useState<string | null>(null);
+  const [lihat, setLihat] = useState<Pesanan | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [submittingId, setSubmittingId] = useState<number | null>(null);
 
   const terfilter = useMemo(() => {
-    return data.filter((r) => {
+    return pesanan.filter((r) => {
       const matchTab = tab === "semua" ? true : r.status === tab;
       const q = cari.trim().toLowerCase();
       const matchCari =
         !q ||
-        r.no.toLowerCase().includes(q) ||
-        r.meja.toLowerCase().includes(q) ||
+        r.kode_pesanan.toLowerCase().includes(q) ||
+        r.no_meja.toLowerCase().includes(q) ||
+        (r.nama_pelanggan || "").toLowerCase().includes(q) ||
+        (r.no_hp || "").toLowerCase().includes(q) ||
         r.items.some((i) => i.nama.toLowerCase().includes(q));
       return matchTab && matchCari;
     });
-  }, [data, tab, cari]);
+  }, [pesanan, tab, cari]);
 
-  const ringkasan = useMemo(() => {
-    const h = (s: StatusPesanan) => data.filter((r) => r.status === s).length;
-    return {
-      semua: data.length,
-      Diterima: h("Diterima"),
-      Dibuat: h("Dibuat"),
-      Diantar: h("Diantar"),
-      Selesai: h("Selesai"),
-      Dibatalkan: h("Dibatalkan"),
-    };
-  }, [data]);
-
-  const nextStatus = (curr: StatusPesanan): StatusPesanan | null => {
-    const idx = URUTAN_STATUS.indexOf(curr);
-    if (idx === -1 || idx === URUTAN_STATUS.length - 1) return null;
-    return URUTAN_STATUS[idx + 1];
-  };
-
-  const updateStatus = (no: string, s: StatusPesanan) => {
-    setData((arr) =>
-      arr.map((x) => (x.no === no ? { ...x, status: s } : x))
-    );
-    setOpenMenuNo(null);
-    if (lihat && lihat.no === no) {
+  const updateStatus = async (id: number, s: StatusUI) => {
+    setSubmittingId(id);
+    await ubahStatus(id, s);
+    setSubmittingId(null);
+    setOpenMenuId(null);
+    if (lihat && lihat.id === id) {
       setLihat((l) => (l ? { ...l, status: s } : l));
     }
   };
 
   return (
     <div className="space-y-3 lg:space-y-4">
-      {/* Header */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
           <div>
@@ -178,7 +88,7 @@ export default function KaryawanPesananPage() {
               <ClipboardList className="text-[#558B2F]" size={26} />
               Pesanan
             </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            <p className="text-gray-700 mt-1 text-sm sm:text-base">
               Kelola pesanan dan ubah status dengan cepat
             </p>
           </div>
@@ -186,16 +96,40 @@ export default function KaryawanPesananPage() {
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
               <Calendar size={14} className="text-gray-600" />
               <span className="text-gray-700 font-medium text-sm">
-                22 Juli 2026
+                {new Date().toLocaleDateString("id-ID", {
+                  day: "2-digit", month: "short", year: "numeric",
+                })}
               </span>
             </div>
+            <button
+              onClick={refresh}
+              title="Refresh data"
+              className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition"
+            >
+              <RefreshCw size={16} className="text-gray-700" />
+            </button>
             <button className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition">
               <Bell size={16} className="text-gray-700" />
             </button>
           </div>
         </div>
 
-        {/* Tabs + Search */}
+        {error && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5" />
+            <div className="text-xs sm:text-sm">
+              <p className="font-bold">Gagal memuat data pesanan</p>
+              <p className="mt-0.5">{error}</p>
+              <button
+                onClick={refresh}
+                className="mt-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700"
+              >
+                Muat Ulang
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mt-4 flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4">
           <div className="flex overflow-x-auto gap-1 sm:gap-2 pb-1 -mx-1 px-1 lg:pb-0 lg:mx-0 lg:px-0 flex-wrap">
             {TABS.map((t) => {
@@ -203,7 +137,7 @@ export default function KaryawanPesananPage() {
               const count =
                 t.key === "semua"
                   ? ringkasan.semua
-                  : ringkasan[t.key as StatusPesanan];
+                  : ringkasan[t.key as StatusUI];
               return (
                 <button
                   key={t.key}
@@ -215,7 +149,7 @@ export default function KaryawanPesananPage() {
                   }`}
                 >
                   {t.label}
-                  <span className="ml-1.5 text-[10px] sm:text-xs text-gray-400 font-normal">
+                  <span className="ml-1.5 text-[10px] sm:text-xs text-gray-600 font-normal">
                     ({count})
                   </span>
                 </button>
@@ -239,7 +173,6 @@ export default function KaryawanPesananPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="mt-4 border border-gray-200 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px]">
@@ -258,122 +191,137 @@ export default function KaryawanPesananPage() {
                 </tr>
               </thead>
               <tbody>
-                {terfilter.map((r) => {
-                  const next = nextStatus(r.status);
-                  return (
-                    <tr
-                      key={r.no}
-                      className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition relative"
-                    >
-                      <td className="py-3 px-3 sm:px-4 font-semibold text-gray-800 text-xs sm:text-sm">
-                        {r.no}
-                      </td>
-                      <td className="py-3 px-3 sm:px-4 text-gray-700 text-xs sm:text-sm">
-                        {r.meja}
-                      </td>
-                      <td className="py-3 px-3 sm:px-4 text-gray-600 text-xs sm:text-sm">
-                        {r.waktu}
-                      </td>
-                      <td className="py-3 px-3 sm:px-4 text-gray-700 text-xs sm:text-sm">
-                        <div className="max-w-[180px]">
-                          <p className="font-bold text-gray-800">
-                            {r.items.length} Item
-                          </p>
-                          <p className="text-gray-400 truncate">
-                            {r.items.map((i) => i.nama).join(", ")}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 sm:px-4 font-bold text-gray-800 text-xs sm:text-sm">
-                        Rp {r.total.toLocaleString("id-ID")}
-                      </td>
-                      <td className="py-3 px-3 sm:px-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold ${BADGE[r.status]}`}
-                        >
-                          {r.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 sm:px-4">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => setLihat(r)}
-                            title="Lihat detail"
-                            className="w-8 h-8 inline-flex items-center justify-center text-[#558B2F] border border-[#558B2F]/30 rounded-lg hover:bg-green-50 transition"
-                          >
-                            <Eye size={14} />
-                          </button>
-                          {next && (
-                            <button
-                              onClick={() => updateStatus(r.no, next)}
-                              title={`Ubah ke ${next}`}
-                              className="inline-flex items-center gap-1 px-2.5 h-8 bg-[#558B2F] text-white rounded-lg text-xs font-bold hover:bg-[#497825] transition shadow-sm"
-                            >
-                              <Check size={13} />
-                              {next}
-                            </button>
-                          )}
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                setOpenMenuNo(openMenuNo === r.no ? null : r.no)
-                              }
-                              className="w-8 h-8 inline-flex items-center justify-center text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                            >
-                              <ChevronDown size={14} />
-                            </button>
-                            {openMenuNo === r.no && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-20"
-                                  onClick={() => setOpenMenuNo(null)}
-                                />
-                                <div className="absolute right-0 top-full mt-1 z-30 bg-white shadow-xl border border-gray-200 rounded-xl py-1.5 w-40">
-                                  {URUTAN_STATUS.map((s) => (
-                                    <button
-                                      key={s}
-                                      disabled={s === r.status}
-                                      onClick={() => updateStatus(r.no, s)}
-                                      className={`w-full text-left px-3 py-1.5 text-xs sm:text-sm transition ${
-                                        s === r.status
-                                          ? "text-gray-400 bg-gray-50 font-bold"
-                                          : "text-gray-700 hover:bg-green-50 hover:text-[#558B2F] font-semibold"
-                                      }`}
-                                    >
-                                      {s === r.status && "✓ "}
-                                      {s}
-                                    </button>
-                                  ))}
-                                  <div className="my-1 border-t border-gray-100" />
-                                  <button
-                                    onClick={() => updateStatus(r.no, "Dibatalkan")}
-                                    className={`w-full text-left px-3 py-1.5 text-xs sm:text-sm transition ${
-                                      r.status === "Dibatalkan"
-                                        ? "text-gray-400 bg-gray-50 font-bold"
-                                        : "text-red-600 hover:bg-red-50 font-semibold"
-                                    }`}
-                                  >
-                                    {r.status === "Dibatalkan" && "✓ "}
-                                    Dibatalkan
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {terfilter.length === 0 && (
+                {loading ? (
                   <tr>
-                    <td
-                      colSpan={7}
-                      className="py-10 text-center text-gray-400 text-sm"
-                    >
+                    <td colSpan={7} className="py-10 text-center">
+                      <div className="inline-block w-6 h-6 border-2 border-[#558B2F]/30 border-t-[#558B2F] rounded-full animate-spin mb-2" />
+                      <p className="text-gray-600 text-sm">Memuat pesanan...</p>
+                    </td>
+                  </tr>
+                ) : terfilter.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-10 text-center text-gray-600 text-sm">
                       Tidak ada pesanan.
                     </td>
                   </tr>
+                ) : (
+                  terfilter.map((r) => {
+                    const next = nextStatus(r.status);
+                    const busy = submittingId === r.id;
+                    return (
+                      <tr
+                        key={r.id}
+                        className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition relative"
+                      >
+                        <td className="py-3 px-3 sm:px-4 font-semibold text-gray-800 text-xs sm:text-sm">
+                          {r.kode_pesanan}
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 text-gray-700 text-xs sm:text-sm">
+                          {r.no_meja}
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 text-gray-600 text-xs sm:text-sm">
+                          {new Date(r.dibuat_pada).toLocaleString("id-ID", {
+                            day: "2-digit", month: "short",
+                            hour: "2-digit", minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 text-gray-700 text-xs sm:text-sm">
+                          <div className="max-w-[180px]">
+                            <p className="font-bold text-gray-800">
+                              {r.items.length} Item
+                            </p>
+                            <p className="text-gray-600 truncate">
+                              {r.items.map((i) => i.nama).join(", ")}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 sm:px-4 font-bold text-gray-800 text-xs sm:text-sm">
+                          Rp {Number(r.total || 0).toLocaleString("id-ID")}
+                        </td>
+                        <td className="py-3 px-3 sm:px-4">
+                          <span
+                            className={`inline-block px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold ${BADGE[r.status]}`}
+                          >
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 sm:px-4">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => setLihat(r)}
+                              title="Lihat detail"
+                              className="w-8 h-8 inline-flex items-center justify-center text-[#558B2F] border border-[#558B2F]/30 rounded-lg hover:bg-green-50 transition"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            {next && (
+                              <button
+                                onClick={() => updateStatus(r.id, next)}
+                                disabled={busy}
+                                title={`Ubah ke ${next}`}
+                                className="inline-flex items-center gap-1 px-2.5 h-8 bg-[#558B2F] text-white rounded-lg text-xs font-bold hover:bg-[#497825] transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {busy ? (
+                                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                  <Check size={13} />
+                                )}
+                                {next}
+                              </button>
+                            )}
+                            <div className="relative">
+                              <button
+                                onClick={() =>
+                                  setOpenMenuId(openMenuId === r.id ? null : r.id)
+                                }
+                                className="w-8 h-8 inline-flex items-center justify-center text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                              >
+                                <ChevronDown size={14} />
+                              </button>
+                              {openMenuId === r.id && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-20"
+                                    onClick={() => setOpenMenuId(null)}
+                                  />
+                                  <div className="absolute right-0 top-full mt-1 z-30 bg-white shadow-xl border border-gray-200 rounded-xl py-1.5 w-40">
+                                    {URUTAN_STATUS.map((s) => (
+                                      <button
+                                        key={s}
+                                        disabled={s === r.status || submittingId === r.id}
+                                        onClick={() => updateStatus(r.id, s)}
+                                        className={`w-full text-left px-3 py-1.5 text-xs sm:text-sm transition ${
+                                          s === r.status
+                                            ? "text-gray-400 bg-gray-50 font-bold"
+                                            : "text-gray-700 hover:bg-green-50 hover:text-[#558B2F] font-semibold"
+                                        }`}
+                                      >
+                                        {s === r.status && "✓ "}
+                                        {s}
+                                      </button>
+                                    ))}
+                                    <div className="my-1 border-t border-gray-100" />
+                                    <button
+                                      onClick={() => updateStatus(r.id, "Dibatalkan")}
+                                      disabled={r.status === "Dibatalkan" || submittingId === r.id}
+                                      className={`w-full text-left px-3 py-1.5 text-xs sm:text-sm transition ${
+                                        r.status === "Dibatalkan"
+                                          ? "text-gray-400 bg-gray-50 font-bold"
+                                          : "text-red-600 hover:bg-red-50 font-semibold"
+                                      }`}
+                                    >
+                                      {r.status === "Dibatalkan" && "✓ "}
+                                      Dibatalkan
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -381,20 +329,21 @@ export default function KaryawanPesananPage() {
         </div>
       </div>
 
-      {/* Modal Detail */}
       {lihat && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={() => setLihat(null)}
         >
           <div
-            className="bg-white rounded-2xl w-full max-w-xl shadow-2xl border border-gray-200 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl w-full max-w-xl shadow-2xl border border-gray-200 overflow-hidden"
           >
             <div className="bg-[#558B2F] px-5 py-4 flex items-center justify-between gap-3">
               <div className="text-white min-w-0">
-                <p className="text-xs opacity-90">No. Pesanan • {lihat.meja}</p>
-                <p className="text-lg font-extrabold truncate">{lihat.no}</p>
+                <p className="text-xs opacity-90">
+                  No. Pesanan • {lihat.no_meja}
+                </p>
+                <p className="text-lg font-extrabold truncate">{lihat.kode_pesanan}</p>
               </div>
               <span
                 className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${BADGE[lihat.status]}`}
@@ -405,34 +354,72 @@ export default function KaryawanPesananPage() {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-gray-400 text-xs">Waktu</p>
-                  <p className="font-bold text-gray-800">{lihat.waktu}</p>
+                  <p className="text-gray-600 text-xs font-semibold">Pelanggan</p>
+                  <p className="font-bold text-gray-800 truncate">
+                    {lihat.nama_pelanggan || "-"}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-xs">Total</p>
+                  <p className="text-gray-600 text-xs font-semibold">No. HP</p>
+                  <p className="font-bold text-gray-800">{lihat.no_hp || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-xs font-semibold">Waktu</p>
+                  <p className="font-bold text-gray-800">
+                    {new Date(lihat.dibuat_pada).toLocaleString("id-ID", {
+                      day: "2-digit", month: "short", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-xs font-semibold">Total Harga</p>
                   <p className="font-extrabold text-[#558B2F]">
-                    Rp {lihat.total.toLocaleString("id-ID")}
+                    Rp {Number(lihat.total || 0).toLocaleString("id-ID")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-xs font-semibold">Metode Bayar</p>
+                  <p className="font-bold text-gray-800">
+                    {lihat.metode_pembayaran || "-"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-600 text-xs font-semibold">Status Bayar</p>
+                  <p
+                    className={`font-extrabold ${
+                      String(lihat.status_pembayaran || "")
+                        .toLowerCase()
+                        .match(/lunas|paid|sudah|berhasil/)
+                        ? "text-green-600"
+                        : "text-amber-600"
+                    }`}
+                  >
+                    {lihat.status_pembayaran || "-"}
                   </p>
                 </div>
               </div>
               <div className="border-t border-gray-100 pt-3 space-y-2">
                 <p className="text-xs font-bold text-gray-500">Daftar Item</p>
-                {lihat.items.map((it, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between items-center text-sm py-1.5 border-b border-gray-50 last:border-b-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-md bg-gray-100 text-gray-500 text-xs font-bold inline-flex items-center justify-center">
-                        {it.qty}x
+                {lihat.items.map((it, idx) => {
+                  const harga = it.subtotal ?? (it.harga ?? 0) * it.qty;
+                  return (
+                    <div
+                      key={it.id ?? idx}
+                      className="flex justify-between items-center text-sm py-1.5 border-b border-gray-50 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-md bg-gray-100 text-gray-500 text-xs font-bold inline-flex items-center justify-center">
+                          {it.qty}x
+                        </span>
+                        <span className="text-gray-700">{it.nama}</span>
+                      </div>
+                      <span className="font-semibold text-gray-800">
+                        Rp {Number(harga || 0).toLocaleString("id-ID")}
                       </span>
-                      <span className="text-gray-700">{it.nama}</span>
                     </div>
-                    <span className="font-semibold text-gray-800">
-                      Rp {Math.round(lihat.total / lihat.items.length).toLocaleString("id-ID")}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
@@ -441,20 +428,33 @@ export default function KaryawanPesananPage() {
                 >
                   Tutup
                 </button>
-                <button
-                  onClick={() => {
-                    const nx = nextStatus(lihat.status);
-                    if (nx) {
-                      updateStatus(lihat.no, nx);
-                    }
-                  }}
-                  disabled={!nextStatus(lihat.status)}
-                  className="py-2.5 rounded-xl bg-[#558B2F] text-white font-bold hover:bg-[#497825] transition text-sm shadow disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  {nextStatus(lihat.status)
-                    ? `→ ${nextStatus(lihat.status)}`
-                    : "Sudah Selesai"}
-                </button>
+                {(() => {
+                  const nx = nextStatus(lihat.status);
+                  if (!nx) {
+                    return (
+                      <button
+                        disabled
+                        className="py-2.5 rounded-xl bg-gray-300 text-gray-600 font-bold cursor-not-allowed text-sm"
+                      >
+                        Sudah Selesai
+                      </button>
+                    );
+                  }
+                  return (
+                    <button
+                      onClick={async () => {
+                        const ok = await ubahStatus(lihat.id, nx);
+                        if (ok) setLihat((l) => (l ? { ...l, status: nx } : l));
+                      }}
+                      disabled={submittingId === lihat.id}
+                      className="py-2.5 rounded-xl bg-[#558B2F] text-white font-bold hover:bg-[#497825] transition text-sm shadow disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {submittingId === lihat.id
+                        ? "Menyimpan..."
+                        : `→ ${nx}`}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           </div>

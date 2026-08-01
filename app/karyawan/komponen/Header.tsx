@@ -15,10 +15,10 @@ export default function Header() {
         <div className="flex items-center gap-3 px-8 h-[68px] rounded-2xl border border-gray-300 bg-white shadow-sm">
           <CalendarDays
             size={30}
-            className="text-gray-600"
+            className="text-gray-700"
           />
 
-          <span className="text-[22px] font-medium text-gray-700">
+          <span className="text-[22px] font-medium text-gray-900">
             20 Mei 2026
           </span>
         </div>
@@ -28,7 +28,7 @@ export default function Header() {
 
           <Bell
             size={30}
-            className="text-gray-700"
+            className="text-gray-900"
           />
 
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-bold rounded-full w-6 h-6 flex items-center justify-center">

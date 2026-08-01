@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { ItemKeranjang } from "./types";
+import { supabase } from "./supabase";
 
 export type RiwayatPesanan = {
   id: string;
@@ -31,16 +32,76 @@ const KERANJANG_KEY = "keranjang";
 export function RiwayatPesananProvider({ children }: { children: ReactNode }) {
   const [riwayat, setRiwayat] = useState<RiwayatPesanan[]>([]);
 
-  useEffect(() => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-      try {
-        setRiwayat(JSON.parse(data));
-      } catch {
-        setRiwayat([]);
+    useEffect(() => {
+      async function loadRiwayat() {
+        const { data, error } = await supabase
+          .from("pesanan")
+          .select(`
+            id,
+            kode_pesanan,
+            nama_pelanggan,
+            total_harga,
+            status_pesanan,
+            dibuat_pada,
+            meja (
+              nomor_meja
+            ),
+            detail_pesanan (
+              id,
+              jumlah,
+              harga,
+              subtotal,
+              produk (
+                nama_produk,
+                gambar
+              )
+            )
+          `)
+          .order("dibuat_pada", {
+            ascending: false,
+          });
+
+
+        if (error) {
+          console.error("Gagal mengambil riwayat:", error);
+          return;
+        }
+
+
+        const formatted: RiwayatPesanan[] = data.map((p: any) => ({
+          id: p.kode_pesanan,
+
+          nomorMeja:
+            p.meja?.nomor_meja ?? "-",
+
+          items: p.detail_pesanan.map((item: any) => ({
+            produk_id: item.id,
+            nama_produk:
+              item.produk?.nama_produk ?? "-",
+            harga: Number(item.harga),
+            jumlah: item.jumlah,
+            gambar:
+              item.produk?.gambar,
+          })),
+
+          subtotal: Number(p.total_harga),
+          pajak: 0,
+          biayaLayanan: 0,
+          total: Number(p.total_harga),
+
+          status: p.status_pesanan,
+
+          dibuatPada:
+            new Date(p.dibuat_pada).getTime(),
+        }));
+
+        setRiwayat(formatted);
       }
-    }
-  }, []);
+
+
+      loadRiwayat();
+
+    }, []);
 
   const persist = (list: RiwayatPesanan[]) => {
     setRiwayat(list);

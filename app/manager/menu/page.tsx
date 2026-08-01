@@ -568,7 +568,7 @@ export default function ManagerMenuPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1 flex items-center gap-2">
             <BookOpen className="text-[#558B2F]" size={26} /> Menu
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-700">
             Kelola daftar menu makanan &amp; minuman lengkap dengan kategori
           </p>
         </div>
@@ -588,11 +588,11 @@ export default function ManagerMenuPage() {
       {/* Stat Card Mini */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         <div className="px-3 py-2.5 rounded-xl border border-gray-100 bg-white">
-          <p className="text-[10px] sm:text-xs text-gray-500 font-semibold">Total Menu</p>
+          <p className="text-[10px] sm:text-xs text-gray-700 font-semibold">Total Menu</p>
           <p className="text-lg sm:text-xl font-extrabold text-gray-800">{produk.length}</p>
         </div>
         <div className="px-3 py-2.5 rounded-xl border border-gray-100 bg-white">
-          <p className="text-[10px] sm:text-xs text-gray-500 font-semibold">Kategori</p>
+          <p className="text-[10px] sm:text-xs text-gray-700 font-semibold">Kategori</p>
           <p className="text-lg sm:text-xl font-extrabold text-[#558B2F]">{kategori.length}</p>
         </div>
         <div className="px-3 py-2.5 rounded-xl border border-green-100 bg-green-50">
@@ -708,19 +708,19 @@ export default function ManagerMenuPage() {
       {loading ? (
         <div className="py-12 text-center">
           <div className="inline-block w-6 h-6 border-2 border-[#558B2F]/30 border-t-[#558B2F] rounded-full animate-spin mb-2" />
-          <p className="text-gray-400 text-sm">Memuat menu...</p>
+          <p className="text-gray-600 text-sm">Memuat menu...</p>
         </div>
       ) : terfilter.length === 0 ? (
         <div className="py-12 text-center">
           <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3">
             <BookOpen size={28} className="text-gray-300" />
           </div>
-          <p className="text-gray-500 text-sm font-semibold mb-1">
+          <p className="text-gray-700 text-sm font-semibold mb-1">
             {cari || kategoriTerpilih !== "semua"
               ? "Tidak ada menu yang sesuai."
               : "Belum ada menu."}
           </p>
-          <p className="text-gray-400 text-xs mb-3">
+          <p className="text-gray-600 text-xs mb-3">
             {kategori.length === 0
               ? "Tambahkan kategori terlebih dahulu, lalu tambahkan menu."
               : "Klik 'Tambah Menu' untuk menambahkan daftar menu warung."}
@@ -781,14 +781,14 @@ export default function ManagerMenuPage() {
                     />
                   </div>
                   <div className="p-2.5 sm:p-3">
-                    <h3 className="font-bold text-gray-800 text-sm mb-0.5 truncate pr-10">
+                    <h3 className="font-bold text-gray-900 text-sm mb-0.5 truncate pr-10">
                       {product.name}
                     </h3>
-                    <p className="text-gray-500 text-[11px] mb-2">
+                    <p className="text-gray-700 text-[11px] font-semibold mb-2">
                       {product.category}
                     </p>
                     <div className="flex items-center justify-between">
-                      <p className="font-bold text-gray-800 text-sm">
+                      <p className="font-extrabold text-gray-900 text-sm">
                         {product.price}
                       </p>
                       <span
@@ -1152,7 +1152,7 @@ export default function ManagerMenuPage() {
                                 ? fileDipilih.name
                                 : "Klik untuk pilih gambar"}
                             </p>
-                            <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">
+                            <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5">
                               PNG / JPG / WebP - maks. 5MB
                             </p>
                           </div>
@@ -1356,7 +1356,7 @@ export default function ManagerMenuPage() {
                   className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
                 />
               </div>
-              <p className="text-[11px] text-gray-500 flex items-center gap-1.5 bg-gray-50 rounded-lg px-3 py-2">
+              <p className="text-[11px] text-gray-700 flex items-center gap-1.5 bg-gray-50 rounded-lg px-3 py-2">
                 <FolderPlus size={13} className="text-[#558B2F]" />
                 Total kategori saat ini: <b className="text-gray-800">{kategori.length}</b>
               </p>

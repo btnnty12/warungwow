@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   ChefHat,
   BookOpen,
   ClipboardCheck,
-  Package,
   LogOut,
   User,
   Menu,
@@ -20,8 +20,7 @@ const menuItems = [
   { href: "/karyawan", label: "Antrian Masak", icon: ChefHat, exact: true },
   { href: "/karyawan/menu", label: "Menu", icon: BookOpen },
   { href: "/karyawan/pesanan", label: "Semua Pesanan", icon: ClipboardCheck },
-  { href: "/karyawan/stok", label: "Stok", icon: Package },
-  { href: "/login", label: "Keluar", icon: LogOut, logout: true },
+  { label: "Keluar", icon: LogOut, logout: true },
 ];
 
 export default function KaryawanLayout({
@@ -29,21 +28,33 @@ export default function KaryawanLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const isActive = (item: (typeof menuItems)[number]) => {
-    if (item.exact) return pathname === item.href;
-    return pathname.startsWith(item.href);
+    const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem("auth_user");
+    router.replace("/login");
   };
 
-  const onClickNav = (item: (typeof menuItems)[number]) => {
-    if (item.logout) {
-      try {
-        localStorage.removeItem("auth_user");
-      } catch {}
-    }
+ const isActive = (item: (typeof menuItems)[number]) => {
+  if (!item.href) return false;
+
+  if (item.exact) return pathname === item.href;
+  return pathname.startsWith(item.href);
+};
+
+  const onClickNav = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: (typeof menuItems)[number]
+  ) => {
     setSidebarOpen(false);
+
+    if (item.logout) {
+      e.preventDefault();
+      handleLogout();
+    }
   };
 
   return (
@@ -105,10 +116,10 @@ export default function KaryawanLayout({
                 const Icon = item.icon;
                 const aktif = isActive(item);
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => onClickNav(item)}
+                <Link
+                  key={item.label}
+                  href={item.logout ? "#" : item.href!}
+                  onClick={(e) => onClickNav(e, item)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
                       aktif
                         ? "bg-[#FBC02D] text-gray-800 shadow"

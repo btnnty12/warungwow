@@ -1,117 +1,97 @@
 "use client";
 
 import { Truck, CheckCircle2, Circle } from "lucide-react";
-import { useState, useEffect } from "react";
 
-type Status = "diterima" | "dibuat" | "diantar" | "selesai";
+type Status =
+  | "diterima_dapur"
+  | "sedang_dibuat"
+  | "sedang_diantar"
+  | "selesai"
+  | "dibatalkan";
 
-export default function TimelinePesanan() {
-  const [status, setStatus] = useState<Status>("diterima");
-  const [timer, setTimer] = useState(0);
+interface TimelinePesananProps {
+  status?: Status;
+}
 
-  useEffect(() => {
-    const interval = setInterval(() => setTimer(t => t + 1), 1000);
-    const t1 = setTimeout(() => setStatus("dibuat"), 3000);
-    const t2 = setTimeout(() => setStatus("diantar"), 8000);
-    const t3 = setTimeout(() => setStatus("selesai"), 13000);
+const steps = [
+  { id: "diterima_dapur", label: "Diterima Dapur" },
+  { id: "sedang_dibuat", label: "Sedang Dibuat" },
+  { id: "sedang_diantar", label: "Sedang Diantar" },
+  { id: "selesai", label: "Selesai" },
+] as const;
 
-    return () => {
-      clearInterval(interval);
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, []);
+export default function TimelinePesanan({
+  status = "diterima_dapur",
+}: TimelinePesananProps) {
+  if (status === "dibatalkan") {
+    return (
+      <div className="border border-red-200 rounded-2xl p-6 bg-white shadow-sm">
+        <h2 className="text-xl font-bold text-red-600">Pesanan Dibatalkan</h2>
+        <p className="text-gray-600 mt-2">Pesanan ini telah dibatalkan.</p>
+      </div>
+    );
+  }
 
-  const steps = [
-    { id: "diterima" as const, label: "Diterima Dapur", icon: CheckCircle2 },
-    { id: "dibuat" as const, label: "Sedang Dibuat", icon: Circle },
-    { id: "diantar" as const, label: "Sedang Diantar", icon: Circle },
-    { id: "selesai" as const, label: "Selesai", icon: CheckCircle2 },
-  ];
-
-  const getStepIndex = (s: Status) => steps.findIndex(step => step.id === s);
-  const currentIndex = getStepIndex(status);
+  const currentIndex = steps.findIndex((step) => step.id === status);
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
 
   return (
-    <div className="border border-gray-200 rounded-2xl p-6 shadow-lg">
+    <div className="border border-gray-200 rounded-2xl p-6 sm:p-7 bg-white shadow-sm">
       <h2 className="text-2xl font-bold text-[#2F54EB] flex items-center gap-2 mb-6">
         <Truck size={28} />
         Track Pesanan Anda
       </h2>
 
-      <div className="relative">
-        {/* Timeline Line */}
-        <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-gray-300" />
+      <div className="relative max-w-4xl">
+        <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gray-200" />
 
         {steps.map((step, index) => {
-          const isCompleted = index < currentIndex;
-          const isActive = index === currentIndex;
-          const StepIcon = step.icon;
+          const selesai = index < safeIndex;
+          const aktif = index === safeIndex;
 
           return (
-            <div
-              key={step.id}
-              className="flex items-start gap-4 mb-8 last:mb-0"
-            >
-              <div className="flex flex-col items-center relative z-10">
+            <div key={step.id} className="relative flex items-start gap-4 pb-5 last:pb-0">
+              <div className="relative z-10 flex flex-col items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
-                    isCompleted
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                    selesai
                       ? "bg-green-500 text-white border-green-500"
-                      : isActive
-                      ? "bg-orange-100 text-orange-600 border-orange-300"
-                      : "bg-gray-200 text-gray-500 border-gray-300"
+                      : aktif
+                        ? "bg-orange-100 text-orange-600 border-orange-300"
+                        : "bg-gray-100 text-gray-400 border-gray-300"
                   }`}
                 >
-                  {isCompleted ? (
-                    <CheckCircle2 size={16} />
-                  ) : (
-                    <Circle size={16} />
-                  )}
+                  {selesai ? <CheckCircle2 size={16} /> : <Circle size={16} />}
                 </div>
+
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-0.5 h-12 mt-2 transition-all ${
-                      isCompleted ? "bg-green-500" : "bg-gray-300"
+                    className={`w-0.5 h-10 mt-2 ${
+                      selesai ? "bg-green-500" : "bg-gray-200"
                     }`}
                   />
                 )}
               </div>
 
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p
-                      className={`font-semibold ${
-                        isCompleted || isActive ? "text-black" : "text-gray-500"
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    {(isCompleted || isActive) && (
-                      <p className="text-xs text-gray-500">
-                        {new Date().toLocaleDateString("id-ID")} |{" "}
-                        {new Date().toLocaleTimeString("id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    )}
-                  </div>
-                  {isActive && (
-                    <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full">
+              <div className="flex-1 min-w-0 pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p
+                    className={`font-semibold ${
+                      selesai || aktif ? "text-black" : "text-gray-500"
+                    }`}
+                  >
+                    {step.label}
+                  </p>
+
+                  {aktif && (
+                    <span className="inline-flex w-fit items-center rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold text-orange-700">
                       Sedang Diproses
                     </span>
                   )}
-                  {isCompleted && (
-                    <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full">
+
+                  {selesai && (
+                    <span className="inline-flex w-fit items-center rounded-full bg-green-100 px-3 py-1 text-[11px] font-semibold text-green-700">
                       Selesai
-                    </span>
-                  )}
-                  {!isActive && !isCompleted && (
-                    <span className="bg-gray-200 text-gray-500 text-xs px-3 py-1 rounded-full">
-                      Menunggu
                     </span>
                   )}
                 </div>

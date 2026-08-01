@@ -11,9 +11,10 @@ import {
   RotateCcw,
   FileText,
 } from "lucide-react";
+import { useState } from "react";
 import { useKeranjang } from "@/lib/useKeranjang";
 import { useMeja } from "@/lib/useMeja";
-import { useRiwayatPesanan } from "@/lib/useRiwayatPesanan";
+import { supabase } from "@/lib/supabase";
 import KeranjangNavbar from "../komponen/KeranjangNavbar";
 
 export default function KeranjangPage() {
@@ -24,9 +25,14 @@ export default function KeranjangPage() {
     tambahKeKeranjang,
     kurangiJumlah,
     hapusDariKeranjang,
+    kosongkanKeranjang,
   } = useKeranjang();
   const { nomorMeja } = useMeja();
-  const { simpanRiwayat } = useRiwayatPesanan();
+
+  const [namaPelanggan, setNamaPelanggan] = useState("");
+  const [noHp, setNoHp] = useState("");
+  const [catatan, setCatatan] = useState("");
+  const [loadingOrder, setLoadingOrder] = useState(false);
 
   const displayItems = keranjang;
 
@@ -34,18 +40,77 @@ export default function KeranjangPage() {
   const biayaLayanan = 3000;
   const totalPembayaran = totalHarga + pajak + biayaLayanan;
 
-  const handlePesanSekarang = () => {
+  const handlePesanSekarang = async () => {
     if (keranjang.length === 0) return;
-    simpanRiwayat({
-      nomorMeja,
-      items: keranjang,
-      subtotal: totalHarga,
-      pajak,
-      biayaLayanan,
-      total: totalPembayaran,
-      status: "Menunggu Konfirmasi",
-    });
-    router.push("/pembayaran");
+
+    if (!namaPelanggan.trim()) {
+      alert("Nama pelanggan wajib diisi.");
+      return;
+    }
+
+    if (!noHp.trim()) {
+      alert("Nomor HP wajib diisi.");
+      return;
+    }
+
+    setLoadingOrder(true);
+
+    try {
+      const kodePesanan = `WOW-${Date.now().toString().slice(-8)}`;
+      const waktuSekarang = new Date().toISOString();
+
+      const { data: authData } = await supabase.auth.getSession();
+
+      console.log("SESSION:", authData.session);
+
+      const { data: pesananBaru, error: errorPesanan } = await supabase
+        .from("pesanan")
+        .insert([
+          {
+            kode_pesanan: kodePesanan,
+            meja_id: null,
+            nama_pelanggan: namaPelanggan.trim(),
+            no_hp: noHp.trim(),
+            total_harga: Number(totalPembayaran.toFixed(0)),
+            metode_pembayaran: "QRIS",
+            status_pembayaran: "menunggu",
+            status_pesanan: "diterima_dapur",
+            catatan: catatan.trim() || null,
+            dibuat_pada: waktuSekarang,
+            diperbarui_pada: waktuSekarang,
+          },
+        ])
+        .select("id")
+        .single();
+
+      if (errorPesanan || !pesananBaru) {
+        throw errorPesanan || new Error("Gagal membuat pesanan.");
+      }
+
+      const itemsToInsert = keranjang.map((item) => ({
+        pesanan_id: pesananBaru.id,
+        produk_id: item.produk_id,
+        jumlah: item.jumlah,
+        harga: Number(item.harga),
+        subtotal: Number(item.harga) * item.jumlah,
+      }));
+
+      const { error: errorItem } = await supabase
+        .from("detail_pesanan")
+        .insert(itemsToInsert);
+
+      if (errorItem) {
+        throw errorItem;
+      }
+
+      kosongkanKeranjang();
+      router.push(`/pembayaran?kode_pesanan=${encodeURIComponent(kodePesanan)}`);
+    } catch (error: any) {
+      console.error("handlePesanSekarang error:", error);
+      alert(error?.message || "Gagal membuat pesanan. Coba ulangi.");
+    } finally {
+      setLoadingOrder(false);
+    }
   };
 
   return (
@@ -255,19 +320,55 @@ export default function KeranjangPage() {
 
             <hr />
 
-            <div className="mt-5">
-              <label
-                htmlFor="catatan"
-                className="block text-sm font-semibold text-black mb-2"
-              >
-                Catatan
-              </label>
-              <textarea
-                id="catatan"
-                rows={3}
-                placeholder="Tambahkan catatan untuk pesanan Anda..."
-                className="w-full resize-none rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F54EB] focus:border-[#2F54EB]"
-              />
+            <div className="mt-5 space-y-3">
+              <div>
+                <label
+                  htmlFor="namaPelanggan"
+                  className="block text-sm font-semibold text-black mb-2"
+                >
+                  Nama Pelanggan
+                </label>
+                <input
+                  id="namaPelanggan"
+                  value={namaPelanggan}
+                  onChange={(e) => setNamaPelanggan(e.target.value)}
+                  placeholder="Masukkan nama pelanggan"
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F54EB] focus:border-[#2F54EB]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="noHp"
+                  className="block text-sm font-semibold text-black mb-2"
+                >
+                  No HP
+                </label>
+                <input
+                  id="noHp"
+                  value={noHp}
+                  onChange={(e) => setNoHp(e.target.value)}
+                  placeholder="Masukkan nomor HP"
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F54EB] focus:border-[#2F54EB]"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="catatan"
+                  className="block text-sm font-semibold text-black mb-2"
+                >
+                  Catatan
+                </label>
+                <textarea
+                  id="catatan"
+                  rows={3}
+                  value={catatan}
+                  onChange={(e) => setCatatan(e.target.value)}
+                  placeholder="Tambahkan catatan untuk pesanan Anda..."
+                  className="w-full resize-none rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F54EB] focus:border-[#2F54EB]"
+                />
+              </div>
             </div>
 
             <div className="mt-5 pt-4 border-t border-gray-100">
@@ -281,14 +382,14 @@ export default function KeranjangPage() {
 
             <button
               onClick={handlePesanSekarang}
-              disabled={displayItems.length === 0}
+              disabled={displayItems.length === 0 || loadingOrder}
               className={`w-full mt-5 py-3.5 rounded-xl font-bold text-base transition ${
-                displayItems.length === 0
+                displayItems.length === 0 || loadingOrder
                   ? "bg-gray-300 cursor-not-allowed"
                   : "bg-[#2F54EB] text-white hover:bg-blue-700"
               }`}
             >
-              Pesan Sekarang
+              {loadingOrder ? "Memproses Pesanan..." : "Pesan Sekarang"}
             </button>
 
             <div className="flex items-center justify-center gap-2 mt-4">

@@ -107,7 +107,7 @@ export default function ManagerLaporanPage() {
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-0.5">
             Laporan
           </h1>
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className="text-sm sm:text-base text-gray-700">
             Lihat ringkasan laporan penjualan dan operasional
           </p>
         </div>
@@ -139,10 +139,10 @@ export default function ManagerLaporanPage() {
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-600 text-xs font-medium mb-0.5">{stat.title}</p>
+                  <p className="text-gray-700 text-xs font-semibold mb-0.5">{stat.title}</p>
                   <p className="text-lg font-bold text-gray-800 truncate">{stat.value}</p>
                   {stat.subValue && (
-                    <p className="text-gray-400 text-[10px] mt-0.5">{stat.subValue}</p>
+                    <p className="text-gray-600 text-[10px] mt-0.5">{stat.subValue}</p>
                   )}
                   {stat.totalValue && (
                     <p className="text-sm font-semibold text-gray-800 mt-1">
@@ -191,7 +191,7 @@ export default function ManagerLaporanPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 border-t border-dashed border-gray-400 rounded" />
-              <span className="text-xs text-gray-600">Previous Day (Rp)</span>
+              <span className="text-xs text-gray-700 font-semibold">Previous Day (Rp)</span>
             </div>
           </div>
           <div className="relative h-40 sm:h-44">
@@ -277,7 +277,7 @@ export default function ManagerLaporanPage() {
               </svg>
               <div className="absolute bottom-[-18px] left-0 w-full flex justify-between">
                 {chartHours.map((h, i) => (
-                  <span key={i} className="text-[10px] text-gray-400">
+                  <span key={i} className="text-[10px] text-gray-600">
                     {h}
                   </span>
                 ))}
