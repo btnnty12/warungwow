@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import * as Midtrans from "midtrans-client";
 
-Midtrans.Snap = Midtrans.Snap || Midtrans;
+const SnapClient = (Midtrans as any).Snap ?? Midtrans;
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
 
     const { order_id, gross_amount } = body;
 
-    const snap = new Midtrans.Snap({
+    const snap = new SnapClient({
       isProduction: false, // false = Sandbox
       serverKey: process.env.MIDTRANS_SERVER_KEY!,
       clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY!,

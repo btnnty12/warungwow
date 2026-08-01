@@ -1,242 +1,375 @@
 import {
-  DollarSign,
+  Bell,
+  Calendar,
+  ChevronDown,
   ClipboardList,
+  DollarSign,
+  Hand,
   ShoppingCart,
   Star,
-  Calendar,
-  Bell,
-  ChevronDown,
-  TrendingUp,
-  Hand,
 } from "lucide-react";
 
-export default function ManagerPage() {
+import { supabase } from "@/lib/supabase";
+import SummaryCard from "./laporan/components/SummaryCard";
+import SalesChart from "./laporan/components/SalesChart";
+import TopProduct from "./laporan/components/TopProduct";
+import OperationalStatus from "./laporan/components/OperationalStatus";
+import DateRangePicker from "./laporan/components/DateRangePicker";
+import NotifikasiBell from "./laporan/components/NotifikasiBell";
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function rangeHariIni() {
+  const t = ymd(new Date());
+  return { start: t, end: t };
+}
+
+function gteStart(d: string | null | undefined, start: string) {
+  if (!d) return false;
+  return d.slice(0, 10) >= start;
+}
+function lteEnd(d: string | null | undefined, end: string) {
+  if (!d) return false;
+  return d.slice(0, 10) <= end;
+}
+function dalamRange(d: string | null | undefined, start: string, end: string) {
+  return gteStart(d, start) && lteEnd(d, end);
+}
+
+function buildTopProducts(detailRows: any[], start: string, end: string) {
+  const produkMap: Record<string, { jumlah: number; pendapatan: number }> = {};
+  detailRows.forEach((item: any) => {
+    const tglPesanan = item.pesanan?.dibuat_pada;
+    const statusOk = item.pesanan?.status_pesanan === "selesai";
+    if (!statusOk || !dalamRange(tglPesanan, start, end)) return;
+    const namaProduk = item.produk?.nama_produk;
+    if (!namaProduk) return;
+    if (!produkMap[namaProduk]) {
+      produkMap[namaProduk] = { jumlah: 0, pendapatan: 0 };
+    }
+    produkMap[namaProduk].jumlah += Number(item.jumlah || 0);
+    produkMap[namaProduk].pendapatan += Number(item.subtotal || 0);
+  });
+  return Object.entries(produkMap)
+    .map(([nama, value]) => ({
+      nama_produk: nama,
+      jumlah_order: value.jumlah,
+      total_penjualan: value.pendapatan,
+    }))
+    .sort((a, b) => b.jumlah_order - a.jumlah_order);
+}
+
+async function getDashboardData(start: string, end: string) {
+  const [pesananRes, detailRes] = await Promise.allSettled([
+    supabase
+      .from("pesanan")
+      .select(
+        "id, total_harga, dibuat_pada, status_pesanan, metode_pembayaran"
+      )
+      .order("dibuat_pada", { ascending: true }),
+    supabase
+      .from("detail_pesanan")
+      .select(
+        `jumlah, subtotal, produk (nama_produk, harga), pesanan (status_pesanan, dibuat_pada)`
+      ),
+  ]);
+
+  const pesanan =
+    pesananRes.status === "fulfilled" && pesananRes.value.data
+      ? (pesananRes.value.data as any[])
+      : [];
+  const detail =
+    detailRes.status === "fulfilled" && detailRes.value.data
+      ? (detailRes.value.data as any[])
+      : [];
+
+  if (pesananRes.status === "fulfilled" && pesananRes.value.error) {
+    console.warn("pesanan error:", pesananRes.value.error);
+  }
+  if (detailRes.status === "fulfilled" && detailRes.value.error) {
+    console.warn("detail_pesanan error:", detailRes.value.error);
+  }
+
+  const pesananSelesaiRange = pesanan.filter(
+    (p) =>
+      p.status_pesanan === "selesai" &&
+      dalamRange(p.dibuat_pada, start, end)
+  );
+
+  const totalOrder = pesananSelesaiRange.length;
+  const totalSales = pesananSelesaiRange.reduce(
+    (total, item) => total + Number(item.total_harga),
+    0
+  );
+  const avgOrderValue = totalOrder > 0 ? totalSales / totalOrder : 0;
+
+  const semuaProduk = buildTopProducts(detail, start, end);
+  const topProduct = semuaProduk[0] || null;
+
+  const pesananRangeAll = pesanan.filter((p) =>
+    dalamRange(p.dibuat_pada, start, end)
+  );
+  let completed = 0;
+  let processing = 0;
+  let cancelled = 0;
+  pesananRangeAll.forEach((item: any) => {
+    switch (item.status_pesanan) {
+      case "selesai":
+        completed++;
+        break;
+      case "diterima_dapur":
+      case "sedang_dibuat":
+      case "sedang_diantar":
+        processing++;
+        break;
+      case "dibatalkan":
+        cancelled++;
+        break;
+    }
+  });
+  const total = completed + processing + cancelled;
+  const operational = {
+    completed: {
+      jumlah: completed,
+      persentase:
+        total > 0 ? Number(((completed / total) * 100).toFixed(1)) : 0,
+    },
+    processing: {
+      jumlah: processing,
+      persentase:
+        total > 0 ? Number(((processing / total) * 100).toFixed(1)) : 0,
+    },
+    cancelled: {
+      jumlah: cancelled,
+      persentase:
+        total > 0 ? Number(((cancelled / total) * 100).toFixed(1)) : 0,
+    },
+    totalOrder: total,
+  };
+
+  return {
+    summary: {
+      totalSales,
+      totalOrder,
+      avgOrderValue,
+      topProduct: topProduct
+        ? {
+            nama: topProduct.nama_produk,
+            jumlahOrder: topProduct.jumlah_order,
+            pendapatan: topProduct.total_penjualan,
+          }
+        : null,
+    },
+    sales: buildSales(pesanan, start, end),
+    operational,
+    products: semuaProduk,
+  };
+}
+
+function buildSales(pesanan: any[], start: string, end: string) {
+  function dateYMD(d: Date) {
+    return d.toISOString().split("T")[0];
+  }
+  const today = new Date();
+  const todayStr = dateYMD(today);
+  const yesterdayD = new Date(today);
+  yesterdayD.setDate(today.getDate() - 1);
+  const yesterdayStr = dateYMD(yesterdayD);
+
+  const hourlyToday: Record<number, number> = {};
+  const hourlyYesterday: Record<number, number> = {};
+  for (let i = 0; i < 24; i++) {
+    hourlyToday[i] = 0;
+    hourlyYesterday[i] = 0;
+  }
+
+  let todayTotal = 0;
+  let previousDayTotal = 0;
+
+  pesanan.forEach((item: any) => {
+    if (item.status_pesanan !== "selesai") return;
+    const date = new Date(item.dibuat_pada);
+    const jam = date.getHours();
+    const tanggal = dateYMD(date);
+    const harga = Number(item.total_harga || 0);
+
+    if (tanggal === todayStr && dalamRange(item.dibuat_pada, start, end)) {
+      hourlyToday[jam] += harga;
+      todayTotal += harga;
+    }
+    if (tanggal === yesterdayStr && dalamRange(item.dibuat_pada, start, end)) {
+      hourlyYesterday[jam] += harga;
+      previousDayTotal += harga;
+    }
+  });
+
+  return {
+    todayTotal,
+    previousDayTotal,
+    chart: Array.from({ length: 24 }, (_, index) => ({
+      jam: `${String(index).padStart(2, "0")}:00`,
+      today: hourlyToday[index],
+      previousDay: hourlyYesterday[index],
+    })),
+  };
+}
+
+export default async function ManagerPage() {
+  const { start, end } = rangeHariIni();
+  const { summary, sales, operational, products } = await getDashboardData(
+    start,
+    end
+  );
+
   const statCards = [
     {
       title: "Total Sales",
-      value: "Rp 12,000,000",
+      value: formatCurrency(summary.totalSales),
       icon: DollarSign,
       iconBg: "bg-blue-500",
       change: "+18.5%",
-      changeLabel: "vs 12 Mei 2026",
+      changeLabel: "vs hari sebelumnya",
       positive: true,
     },
     {
       title: "Total Order",
-      value: "365",
+      value: String(summary.totalOrder),
       icon: ClipboardList,
       iconBg: "bg-red-500",
       change: "+12.5%",
-      changeLabel: "vs 12 Mei 2026",
+      changeLabel: "vs hari sebelumnya",
       positive: true,
     },
     {
       title: "Avg Order Value",
-      value: "Rp 3,000,000",
+      value: formatCurrency(summary.avgOrderValue),
       icon: ShoppingCart,
       iconBg: "bg-orange-500",
       change: "+3.5%",
-      changeLabel: "vs 12 Mei 2026",
+      changeLabel: "vs hari sebelumnya",
       positive: true,
     },
     {
       title: "Top Product",
-      value: "Nasi Goreng",
-      subValue: "122 order",
-      totalValue: "Rp 12,000,000",
+      value: summary.topProduct?.nama ?? "-",
+      subValue: `${summary.topProduct?.jumlahOrder ?? 0} order`,
+      totalValue: summary.topProduct
+        ? formatCurrency(summary.topProduct.pendapatan)
+        : "-",
       icon: Star,
       iconBg: "bg-green-500",
     },
   ];
 
-  const topSellingProducts = [
-    { rank: 1, name: "Nasi Goreng Spesial", orders: "122 orders", total: "Rp 12,000,000" },
-    { rank: 2, name: "Ayam Geprek", orders: "89 orders", total: "Rp 1,500,000" },
-    { rank: 3, name: "Spaghetti Wow", orders: "77 orders", total: "Rp 1,125,000" },
-    { rank: 4, name: "Es Teh Manis", orders: "68 orders", total: "Rp 900,000" },
-    { rank: 5, name: "Kopi Hitam", orders: "54 orders", total: "Rp 250,000" },
+  const kitchenPerformancePoints = [
+    30, 70, 55, 85, 40, 75, 60, 90, 50, 70, 80, 65, 85,
   ];
 
-  const operationalData = [
-    { label: "Completed", count: 234, percentage: "85.2%", color: "#22c55e" },
-    { label: "Processing", count: 34, percentage: "25%", color: "#f97316" },
-    { label: "Cancelled", count: 15, percentage: "9.8%", color: "#ef4444" },
-  ];
-
-  const chartHours = ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"];
-  const salesData = [500000, 2000000, 3500000, 7000000, 5000000, 7500000, 6000000];
-  const prevSalesData = [400000, 1500000, 2800000, 5500000, 4200000, 5800000, 5000000];
-  const maxValue = 8000000;
-
-  const kitchenPerformancePoints = [30, 70, 55, 85, 40, 75, 60, 90, 50, 70, 80, 65, 85];
+  const labelHariIni = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
           Hello, Manager
           <Hand size={22} className="text-yellow-500" strokeWidth={2} />
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+          <DateRangePicker mode="fixed-today" />
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-xs">
             <Calendar size={14} className="text-gray-600" />
-            <span className="text-gray-700 font-medium text-sm">20 Mei 2026</span>
+            <span className="text-gray-700 font-medium">{labelHariIni}</span>
           </div>
-          <button className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition">
-            <Bell size={16} className="text-gray-700" />
-          </button>
+          <NotifikasiBell forRole="manager" />
         </div>
       </div>
 
-      {/* Statistic Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
-        {statCards.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div key={idx} className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 hover:shadow-md transition">
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-lg ${stat.iconBg} flex items-center justify-center text-white shadow flex-shrink-0`}>
-                  <Icon size={18} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-700 text-xs font-semibold mb-0.5">{stat.title}</p>
-                  <p className="text-lg font-bold text-gray-800 truncate">{stat.value}</p>
-                  {stat.subValue && <p className="text-gray-600 text-[10px] mt-0.5">{stat.subValue}</p>}
-                  {stat.totalValue && <p className="text-sm font-semibold text-gray-800 mt-1">{stat.totalValue}</p>}
-                  {stat.change && (
-                    <div className="mt-1.5">
-                      <div className="flex items-center gap-1">
-                        <TrendingUp size={12} style={{ color: stat.positive ? "#16a34a" : "#dc2626" }} />
-                        <span className="text-xs font-bold" style={{ color: stat.positive ? "#16a34a" : "#dc2626" }}>
-                          {stat.change}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-[10px] mt-0.5">{stat.changeLabel}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {statCards.map((stat, idx) => (
+          <SummaryCard key={idx} {...stat} />
+        ))}
       </div>
 
-      {/* Sales Analytics + Top Selling Product */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 mb-3">
-        {/* Sales Analytics */}
-        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
-            <h3 className="text-base sm:text-lg font-bold text-gray-800">Sales Analytics</h3>
-            <button className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition w-fit text-sm">
-              <span className="text-gray-700 font-medium">Today</span>
-              <ChevronDown size={12} className="text-gray-500" />
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center gap-4 mb-3 ml-1">
-            <div className="flex items-center gap-2"><div className="w-6 h-0.5 bg-blue-600 rounded" /><span className="text-xs text-gray-600">Sales (Rp)</span></div>
-            <div className="flex items-center gap-2"><div className="w-6 border-t border-dashed border-gray-400 rounded" /><span className="text-xs text-gray-600">Previous Day (Rp)</span></div>
-          </div>
-          <div className="relative h-44 sm:h-48">
-            <div className="absolute left-0 top-0 h-full flex flex-col justify-between py-2 pr-2">
-              {["8M", "6M", "4M", "2M", "0"].map((l, i) => (
-                <span key={i} className="text-[10px] text-gray-600 text-right w-5">{l}</span>
-              ))}
-            </div>
-            <div className="ml-7 h-full relative">
-              <svg className="w-full h-full overflow-visible" viewBox="0 0 700 250" preserveAspectRatio="none">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <line key={i} x1="0" y1={i*50+25} x2="700" y2={i*50+25} stroke="#f3f4f6" strokeWidth="1" />
-                ))}
-                <path d={`M 0 ${225 - (prevSalesData[0]/maxValue)*200} ${prevSalesData.map((v,i)=>`L ${(i/(prevSalesData.length-1))*700} ${225 - (v/maxValue)*200}`).join(" ")}`} fill="none" stroke="#9ca3af" strokeWidth="2" strokeDasharray="4 4" />
-                <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" /><stop offset="100%" stopColor="#3b82f6" stopOpacity="0" /></linearGradient></defs>
-                <path d={`M 0 225 L 0 ${225 - (salesData[0]/maxValue)*200} ${salesData.map((v,i)=>`L ${(i/(salesData.length-1))*700} ${225 - (v/maxValue)*200}`).join(" ")} L 700 225 Z`} fill="url(#sg)" />
-                <path d={`M 0 ${225 - (salesData[0]/maxValue)*200} ${salesData.map((v,i)=>`L ${(i/(salesData.length-1))*700} ${225 - (v/maxValue)*200}`).join(" ")}`} fill="none" stroke="#2563eb" strokeWidth="2.5" />
-                {salesData.map((v,i)=>(
-                  <circle key={i} cx={(i/(salesData.length-1))*700} cy={225-(v/maxValue)*200} r="3.5" fill="white" stroke="#2563eb" strokeWidth="2.5" />
-                ))}
-              </svg>
-              <div className="absolute bottom-[-20px] left-0 w-full flex justify-between">
-                {chartHours.map((h,i)=>(<span key={i} className="text-[10px] text-gray-400">{h}</span>))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Selling Product */}
-        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-base sm:text-lg font-bold text-gray-800">Top Selling Product</h3>
-            <button className="text-blue-600 font-bold hover:text-blue-700 transition text-sm">View All</button>
-          </div>
-          <div className="space-y-0.5">
-            {topSellingProducts.map((p)=>(
-              <div key={p.rank} className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-lg transition border-b border-gray-50 last:border-b-0">
-              <span className="text-gray-600 font-bold text-sm w-6 flex-shrink-0">{p.rank}</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-800 text-sm truncate">{p.name}</p>
-                <p className="text-gray-600 text-xs">{p.orders}</p>
-              </div>
-              <p className="font-bold text-gray-800 text-xs ml-2 flex-shrink-0">{p.total}</p>
-            </div>
-            ))}
-          </div>
-        </div>
+        <SalesChart
+          chart={sales.chart}
+          todayTotal={sales.todayTotal}
+          previousDayTotal={sales.previousDayTotal}
+        />
+        <TopProduct products={products} />
       </div>
 
-      {/* Operational Status + Kitchen Performance */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-        {/* Operational Status */}
-        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
-          <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-3">Operational Status</h3>
-          <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5">
-            <div className="relative w-32 h-32 sm:w-36 sm:h-36 mx-auto md:mx-0 flex-shrink-0">
-              <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-                {(()=>{
-                  let offset=0; const c=2*Math.PI*38;
-                  return operationalData.map((item,idx)=>{
-                    const pct=parseFloat(item.percentage.replace("%",""))/100;
-                    const da=pct*c; const co=offset; offset+=da;
-                    return <circle key={idx} cx="50" cy="50" r="38" fill="none" stroke={item.color} strokeWidth="12" strokeDasharray={`${da} ${c}`} strokeDashoffset={-co} />;
-                  });
-                })()}
-              </svg>
-            </div>
-            <div className="flex-1 space-y-2">
-              {operationalData.map((item)=>(
-                <div key={item.label} className="flex items-center gap-2.5">
-                  <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{backgroundColor:item.color}} />
-                  <span className="font-bold text-gray-700 flex-1 text-sm">{item.label}</span>
-                  <span className="font-bold text-gray-800 text-xs sm:text-sm">{item.count} ({item.percentage})</span>
-                </div>
-              ))}
-              <button className="w-full mt-3 px-4 py-1.5 border-2 border-blue-600 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition text-sm">View All Orders</button>
-            </div>
-          </div>
-        </div>
+        <OperationalStatus
+          completed={operational.completed}
+          processing={operational.processing}
+          cancelled={operational.cancelled}
+        />
 
-        {/* Kitchen Performance */}
         <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-            <h3 className="text-base sm:text-lg font-bold text-gray-800">Kitchen Performance</h3>
-            <span className="px-3 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold w-fit">On Target</span>
+            <h3 className="text-base sm:text-lg font-bold text-gray-800">
+              Kitchen Performance
+            </h3>
+            <span className="px-3 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold w-fit">
+              On Target
+            </span>
           </div>
           <div className="p-3 border border-gray-200 rounded-xl mb-2">
-            <p className="text-gray-700 text-xs font-semibold mb-2">Average Preparation Time</p>
+            <p className="text-gray-700 text-xs font-semibold mb-2">
+              Average Preparation Time
+            </p>
             <div className="flex flex-col sm:flex-row sm:items-end gap-2 mb-1">
               <p className="text-2xl font-bold text-gray-800">12m 45d</p>
               <div className="flex-1 h-16 relative w-full sm:w-auto">
-                <svg viewBox="0 0 200 96" preserveAspectRatio="none" className="w-full h-full">
-                  <path d={`M 0 ${96 - kitchenPerformancePoints[0]} ${kitchenPerformancePoints.map((v,i)=>`L ${(i/(kitchenPerformancePoints.length-1))*200} ${96 - v}`).join(" ")}`} fill="none" stroke="#558B2F" strokeWidth="2.5" />
+                <svg
+                  viewBox="0 0 200 96"
+                  preserveAspectRatio="none"
+                  className="w-full h-full"
+                >
+                  <path
+                    d={`M 0 ${
+                      96 - kitchenPerformancePoints[0]
+                    } ${kitchenPerformancePoints
+                      .map(
+                        (v, i) =>
+                          `L ${
+                            (i / (kitchenPerformancePoints.length - 1)) * 200
+                          } ${96 - v}`
+                      )
+                      .join(" ")}`}
+                    fill="none"
+                    stroke="#558B2F"
+                    strokeWidth="2.5"
+                  />
                 </svg>
               </div>
             </div>
-            <p className="text-[10px] text-gray-600">Target: &lt; 15 menit</p>
+            <p className="text-[10px] text-gray-600">Target: {"<"} 15 menit</p>
           </div>
           <div className="flex justify-between items-center px-1">
             <span className="text-xs text-gray-500">Orders Completed</span>
-            <span className="font-bold text-gray-700 text-sm">298</span>
+            <span className="font-bold text-gray-700 text-sm">
+              {operational.totalOrder}
+            </span>
           </div>
         </div>
       </div>

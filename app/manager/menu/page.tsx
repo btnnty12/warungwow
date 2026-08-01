@@ -58,6 +58,7 @@ type FormProduk = {
   deskripsi: string;
   gambar: string;
   harga: string;
+  stok: string;
   status: "tersedia" | "habis";
 };
 
@@ -67,6 +68,7 @@ const FORM_KOSONG: FormProduk = {
   deskripsi: "",
   gambar: "",
   harga: "",
+  stok: "",
   status: "tersedia",
 };
 
@@ -251,6 +253,7 @@ export default function ManagerMenuPage() {
       deskripsi: p.deskripsi || "",
       gambar: p.gambar || "",
       harga: p.harga != null ? String(p.harga) : "",
+      stok: "",
       status: p.status === "habis" ? "habis" : "tersedia",
     };
   }

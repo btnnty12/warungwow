@@ -8,7 +8,6 @@ import {
   Package,
   Clock,
   Calendar,
-  Bell,
   Eye,
   X,
   Play,
@@ -16,12 +15,16 @@ import {
   CheckCircle2,
   RefreshCw,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  List,
 } from "lucide-react";
 import {
   usePesananRealtime,
   type Pesanan,
   type StatusUI,
 } from "@/lib/use-pesanan-realtime";
+import NotifikasiBell from "../manager/laporan/components/NotifikasiBell";
 
 const STATUS_UNTUK_CARD: Record<StatusUI, "Baru" | "Dibuat" | "Diantar" | "Selesai"> = {
   Diterima: "Baru",
@@ -36,6 +39,13 @@ export default function KaryawanPage() {
     usePesananRealtime();
   const [lihat, setLihat] = useState<Pesanan | null>(null);
   const [submittingId, setSubmittingId] = useState<number | null>(null);
+  const [expandedPesanan, setExpandedPesanan] = useState(false);
+
+  const PREVIEW_PESANAN = 5;
+  const displayPesanan = expandedPesanan
+    ? pesananAktif
+    : pesananAktif.slice(0, PREVIEW_PESANAN);
+  const hasMorePesanan = pesananAktif.length > PREVIEW_PESANAN;
 
   const statsHariIni = useMemo(() => {
     const tgl = new Date().toDateString();
@@ -80,9 +90,7 @@ export default function KaryawanPage() {
           >
             <RefreshCw size={16} className="text-gray-700" />
           </button>
-          <button className="w-9 h-9 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100 transition">
-            <Bell size={16} className="text-gray-700" />
-          </button>
+          <NotifikasiBell forRole="karyawan" />
         </div>
       </div>
 
@@ -161,8 +169,9 @@ export default function KaryawanPage() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 mt-4">
-            {pesananAktif.map((p) => {
+          <>
+            <div className="flex flex-col gap-4 mt-4">
+              {displayPesanan.map((p) => {
               const s = STATUS_UNTUK_CARD[p.status];
               const warna =
                 s === "Baru"
@@ -281,6 +290,35 @@ export default function KaryawanPage() {
               );
             })}
           </div>
+
+          {hasMorePesanan && (
+            <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <List size={14} />
+                <span>
+                  Menampilkan {displayPesanan.length} dari {pesananAktif.length} pesanan aktif
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpandedPesanan((v) => !v)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#558B2F]/30 bg-[#558B2F]/10 text-[#37641f] hover:bg-[#558B2F]/15 transition text-sm font-bold"
+              >
+                {expandedPesanan ? (
+                  <>
+                    <ChevronUp size={15} />
+                    <span>Tutup Daftar</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={15} />
+                    <span>View Full List ({pesananAktif.length})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+          </>
         )}
       </div>
 
