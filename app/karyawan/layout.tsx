@@ -2,145 +2,49 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   ChefHat,
   BookOpen,
   ClipboardCheck,
+  Package,
   LogOut,
   User,
   Menu,
   X,
   Timer,
-  Loader2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const menuItems = [
   { href: "/karyawan", label: "Antrian Masak", icon: ChefHat, exact: true },
   { href: "/karyawan/menu", label: "Menu", icon: BookOpen },
   { href: "/karyawan/pesanan", label: "Semua Pesanan", icon: ClipboardCheck },
+  { href: "/karyawan/stok", label: "Stok", icon: Package },
   { href: "/login", label: "Keluar", icon: LogOut, logout: true },
 ];
-
-type ProfilPengguna = {
-  nama: string | null;
-  peran: string;
-};
 
 export default function KaryawanLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profil, setProfil] = useState<ProfilPengguna | null>(null);
-  const [cekAuth, setCekAuth] = useState(true);
 
   const isActive = (item: (typeof menuItems)[number]) => {
     if (item.exact) return pathname === item.href;
-    return !!pathname?.startsWith(item.href);
+    return pathname.startsWith(item.href);
   };
 
-  useEffect(() => {
-    let batal = false;
-
-    async function validasi() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const sesi = data.session;
-        if (!sesi?.user) {
-          if (!batal) router.replace("/login?redirect=" + encodeURIComponent(pathname || "/karyawan"));
-          return;
-        }
-
-        const { data: pengguna, error: errP } = await supabase
-          .from("pengguna")
-          .select("nama, peran")
-          .eq("auth_id", sesi.user.id)
-          .single();
-
-        if (errP || !pengguna) {
-          await supabase.auth.signOut();
-          if (!batal) router.replace("/login");
-          return;
-        }
-
-        if (pengguna.peran !== "karyawan") {
-          if (pengguna.peran === "manager") {
-            if (!batal) router.replace("/manager");
-          } else {
-            await supabase.auth.signOut();
-            if (!batal) router.replace("/login");
-          }
-          return;
-        }
-
-        try {
-          localStorage.setItem(
-            "auth_user",
-            JSON.stringify({
-              role: pengguna.peran,
-              email: sesi.user.email,
-              nama: pengguna.nama,
-              loginPada: Date.now(),
-            })
-          );
-        } catch {}
-
-        if (!batal) setProfil({ nama: pengguna.nama, peran: pengguna.peran });
-      } catch (e) {
-        console.error("Auth guard karyawan error:", e);
-        if (!batal) router.replace("/login");
-      } finally {
-        if (!batal) setCekAuth(false);
-      }
-    }
-
-    validasi();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        try { localStorage.removeItem("auth_user"); } catch {}
-        router.replace("/login");
-      }
-    });
-
-    return () => {
-      batal = true;
-      listener?.subscription.unsubscribe();
-    };
-  }, [router, pathname]);
-
-  async function handleLogout(e: React.MouseEvent) {
-    e.preventDefault();
-    try {
-      await supabase.auth.signOut();
-      localStorage.removeItem("auth_user");
-    } catch {}
-    router.replace("/login");
-  }
-
-  function onClickNav(item: (typeof menuItems)[number]) {
+  const onClickNav = (item: (typeof menuItems)[number]) => {
     if (item.logout) {
-      try { localStorage.removeItem("auth_user"); } catch {}
+      try {
+        localStorage.removeItem("auth_user");
+      } catch {}
     }
     setSidebarOpen(false);
-  }
-
-  if (cekAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="flex items-center gap-3 text-[#558B2F]">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="font-bold text-sm">Memeriksa akses Karyawan / Dapur...</span>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -200,47 +104,58 @@ export default function KaryawanLayout({
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const aktif = isActive(item);
-                const Wrapper = item.logout ? "a" : Link;
                 return (
-                  <Wrapper
+                  <Link
                     key={item.href}
                     href={item.href}
-                    onClick={item.logout ? handleLogout : () => onClickNav(item)}
+                    onClick={() => onClickNav(item)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-bold text-sm transition ${
-                      aktif && !item.logout
+                      aktif
                         ? "bg-[#FBC02D] text-gray-800 shadow"
                         : "text-white/90 hover:bg-white/10"
                     }`}
                   >
                     <Icon size={20} className="flex-shrink-0" />
                     <span>{item.label}</span>
-                  </Wrapper>
+                  </Link>
                 );
               })}
             </nav>
 
-            {/* Footer User */}
-            <div className="p-3 border-t border-white/15">
-              <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/10">
-                <div className="w-9 h-9 rounded-full bg-white text-[#558B2F] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  <User size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">
-                    {profil?.nama || "Karyawan"}
-                  </p>
-                  <p className="text-[10px] text-white/70 flex items-center gap-1">
-                    <Timer size={10} /> Karyawan Aktif
-                  </p>
-                </div>
-              </div>
+        {/* Footer User */}
+        <div className="p-3 border-t border-white/15">
+          <Link
+            href="/karyawan/profil"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition"
+          >
+            <div className="w-9 h-9 rounded-full bg-white text-[#558B2F] flex items-center justify-center flex-shrink-0">
+              <User size={18} />
             </div>
-          </div>
+
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white">
+                Karyawan
+              </p>
+
+              <p className="text-[10px] text-white/70 flex items-center gap-1">
+                <Timer size={10} />
+                Profil
+              </p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Tambahkan ini */}
+        </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 w-full p-4 sm:p-5">{children}</main>
-      </div>
-    </div>
-  );
+        <main className="flex-1 min-w-0 w-full p-4 sm:p-5">
+          {children}
+        </main>
+
+        </div>
+        </div>
+        );
 }

@@ -31,7 +31,6 @@ type ProdukRow = {
   nama_produk?: string | null;
   deskripsi?: string | null;
   harga?: number | null;
-  stok?: number | null;
   status?: string | null;
   gambar?: string | null;
   kategori_id?: number | null;
@@ -59,7 +58,6 @@ type FormProduk = {
   deskripsi: string;
   gambar: string;
   harga: string;
-  stok: string;
   status: "tersedia" | "habis";
 };
 
@@ -69,7 +67,6 @@ const FORM_KOSONG: FormProduk = {
   deskripsi: "",
   gambar: "",
   harga: "",
-  stok: "0",
   status: "tersedia",
 };
 
@@ -254,7 +251,6 @@ export default function ManagerMenuPage() {
       deskripsi: p.deskripsi || "",
       gambar: p.gambar || "",
       harga: p.harga != null ? String(p.harga) : "",
-      stok: p.stok != null ? String(p.stok) : "0",
       status: p.status === "habis" ? "habis" : "tersedia",
     };
   }
@@ -369,8 +365,6 @@ export default function ManagerMenuPage() {
     if (!form.harga.trim()) return "Harga wajib diisi.";
     const h = Number(form.harga);
     if (Number.isNaN(h) || h < 0) return "Harga tidak valid.";
-    const s = Number(form.stok);
-    if (form.stok.trim() === "" || Number.isNaN(s) || s < 0) return "Stok tidak valid.";
     return null;
   }
 
@@ -399,7 +393,6 @@ export default function ManagerMenuPage() {
         deskripsi: form.deskripsi.trim() || null,
         gambar: urlGambar,
         harga: Number(form.harga),
-        stok: Number(form.stok),
         status: form.status,
       };
       if (modalBuka === "tambah") {

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   Home,
   BookOpen,
@@ -13,9 +13,7 @@ import {
   User,
   Menu,
   X,
-  Loader2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 
 const menuItems = [
   { href: "/manager", label: "Beranda", icon: Home, exact: true },
@@ -25,111 +23,13 @@ const menuItems = [
   { href: "/login", label: "Keluar", icon: LogOut, logout: true },
 ];
 
-type ProfilPengguna = {
-  nama: string | null;
-  peran: string;
-};
-
 export default function ManagerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profil, setProfil] = useState<ProfilPengguna | null>(null);
-  const [cekAuth, setCekAuth] = useState(true);
-
-  useEffect(() => {
-    let batal = false;
-
-    async function validasi() {
-      try {
-        const { data } = await supabase.auth.getSession();
-        const sesi = data.session;
-        if (!sesi?.user) {
-          if (!batal) router.replace("/login?redirect=" + encodeURIComponent(pathname || "/manager"));
-          return;
-        }
-
-        const { data: pengguna, error: errP } = await supabase
-          .from("pengguna")
-          .select("nama, peran")
-          .eq("auth_id", sesi.user.id)
-          .single();
-
-        if (errP || !pengguna) {
-          await supabase.auth.signOut();
-          if (!batal) router.replace("/login");
-          return;
-        }
-
-        if (pengguna.peran !== "manager") {
-          if (pengguna.peran === "karyawan") {
-            if (!batal) router.replace("/karyawan");
-          } else {
-            await supabase.auth.signOut();
-            if (!batal) router.replace("/login");
-          }
-          return;
-        }
-
-        try {
-          localStorage.setItem(
-            "auth_user",
-            JSON.stringify({
-              role: pengguna.peran,
-              email: sesi.user.email,
-              nama: pengguna.nama,
-              loginPada: Date.now(),
-            })
-          );
-        } catch {}
-
-        if (!batal) setProfil({ nama: pengguna.nama, peran: pengguna.peran });
-      } catch (e) {
-        console.error("Auth guard manager error:", e);
-        if (!batal) router.replace("/login");
-      } finally {
-        if (!batal) setCekAuth(false);
-      }
-    }
-
-    validasi();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        try { localStorage.removeItem("auth_user"); } catch {}
-        router.replace("/login");
-      }
-    });
-
-    return () => {
-      batal = true;
-      listener?.subscription.unsubscribe();
-    };
-  }, [router, pathname]);
-
-  async function handleLogout(e: React.MouseEvent) {
-    e.preventDefault();
-    try {
-      await supabase.auth.signOut();
-      localStorage.removeItem("auth_user");
-    } catch {}
-    router.replace("/login");
-  }
-
-  if (cekAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="flex items-center gap-3 text-[#558B2F]">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span className="font-bold text-sm">Memeriksa akses Manager...</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -178,47 +78,72 @@ export default function ManagerLayout({
             const isActive = item.exact
               ? pathname === item.href
               : pathname?.startsWith(item.href);
-            const onClick = item.logout ? handleLogout : () => setSidebarOpen(false);
-            const Wrapper = item.logout ? "a" : Link;
             return (
-              <Wrapper
+              <Link
                 key={item.label}
                 href={item.href}
-                onClick={onClick as any}
+                onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive && !item.logout
+                  isActive
                     ? "bg-yellow-300 text-black font-bold shadow-sm"
                     : "text-white hover:bg-white/10"
                 }`}
               >
-                <Icon size={20} strokeWidth={isActive && !item.logout ? 2.5 : 2} />
+                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                 <span className="text-sm lg:text-base">{item.label}</span>
-              </Wrapper>
+              </Link>
             );
           })}
         </nav>
 
+               {/* Footer User */}
         <div className="p-3 mt-auto border-t border-white/20">
-          <div className="flex items-center gap-2.5 px-1.5 py-1.5">
-            <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#558B2F] flex-shrink-0 overflow-hidden">
+
+          <Link
+            href="/manager/profil"
+            onClick={() => setSidebarOpen(false)}
+            className="
+              flex 
+              items-center 
+              gap-2.5 
+              px-2 
+              py-2 
+              rounded-xl 
+              bg-white/10 
+              hover:bg-white/20 
+              transition
+            "
+          >
+
+            <div className="w-9 h-9 rounded-full bg-white text-[#558B2F] flex items-center justify-center flex-shrink-0">
               <User size={18} />
             </div>
+
             <div className="min-w-0">
-              <p className="font-bold text-white text-sm truncate">
-                {profil?.nama || "Manager"}
+
+              <p className="text-sm font-bold text-white">
+                Manager
               </p>
-              <p className="text-[10px] text-white/75 font-semibold">
-                Administrator
+
+              <p className="text-[10px] text-white/70">
+                Profil
               </p>
+
             </div>
-          </div>
+
+          </Link>
+
         </div>
+
       </aside>
+
 
       {/* Main Content */}
       <main className="pt-14 lg:pt-0 lg:ml-56 xl:ml-60 p-3 sm:p-4 lg:p-5 min-h-screen">
         {children}
       </main>
+
+
     </div>
   );
 }
