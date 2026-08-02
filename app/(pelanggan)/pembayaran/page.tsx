@@ -207,7 +207,7 @@ export default function PembayaranPage() {
             />
           </div>
           <div className="col-span-5">
-            <QrisPayment orderCode={invoice?.kode_pesanan} />
+            <QrisPayment pesananId={invoice?.id} />
           </div>
         </div>
 

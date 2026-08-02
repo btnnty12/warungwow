@@ -123,6 +123,46 @@ function buildSales(pesanan: any[], start: string, end: string) {
   };
 }
 
+function buildKitchenPerformance(pesanan: any[], start: string, end: string) {
+  const selesaiRange = pesanan.filter(
+    (item: any) =>
+      item.status_pesanan === "selesai" &&
+      dalamRange(item.dibuat_pada, start, end)
+  );
+
+  const durasiMenit = selesaiRange
+    .map((item: any) => {
+      const dibuat = new Date(item.dibuat_pada).getTime();
+      const selesai = new Date(item.diperbarui_pada || item.dibuat_pada).getTime();
+      if (Number.isNaN(dibuat) || Number.isNaN(selesai)) return null;
+      return Math.max(0, Math.round((selesai - dibuat) / 60000));
+    })
+    .filter((value): value is number => typeof value === "number");
+
+  const averagePreparationMinutes =
+    durasiMenit.length > 0
+      ? Math.round(
+          durasiMenit.reduce((sum, value) => sum + value, 0) / durasiMenit.length
+        )
+      : 0;
+
+  const maxDuration = Math.max(...durasiMenit, 15);
+  const chartPoints = Array.from({ length: 13 }, (_, idx) => {
+    const sampleIndex = Math.min(
+      durasiMenit.length - 1,
+      Math.max(0, Math.floor((idx / 12) * Math.max(1, durasiMenit.length - 1)))
+    );
+    const point = durasiMenit[sampleIndex] ?? 0;
+    return Math.max(0, Math.min(100, Math.round((point / maxDuration) * 100)));
+  });
+
+  return {
+    averagePreparationMinutes,
+    onTarget: averagePreparationMinutes < 15,
+    chartPoints,
+  };
+}
+
 function buildRevenueRows(
   pesananRows: any[],
   start: string,
@@ -169,7 +209,7 @@ async function getLaporanData(start: string, end: string) {
     supabase
       .from("pesanan")
       .select(
-        "id, total_harga, dibuat_pada, status_pesanan, metode_pembayaran"
+        "id, total_harga, dibuat_pada, diperbarui_pada, status_pesanan, metode_pembayaran"
       )
       .order("dibuat_pada", { ascending: true }),
     supabase
@@ -267,6 +307,7 @@ async function getLaporanData(start: string, end: string) {
     },
     sales: buildSales(pesanan, start, end),
     operational,
+    kitchenPerformance: buildKitchenPerformance(pesanan, start, end),
     products: semuaProduk,
     revenueRows: buildRevenueRows(pesanan, start, end),
   };
@@ -297,14 +338,16 @@ export default async function ManagerLaporanPage({
   const rangeStart = start <= end ? start : end;
   const rangeEnd = start <= end ? end : start;
 
-  const { summary, sales, operational, products, revenueRows } = await getLaporanData(
-    rangeStart,
-    rangeEnd
-  );
+  const {
+    summary,
+    sales,
+    operational,
+    kitchenPerformance,
+    products,
+    revenueRows,
+  } = await getLaporanData(rangeStart, rangeEnd);
 
-  const kitchenPerformancePoints = [
-    30, 70, 55, 85, 40, 75, 60, 90, 50, 70, 80, 65, 85,
-  ];
+  const kitchenPerformancePoints = kitchenPerformance.chartPoints;
 
   const statCards = [
     {
@@ -411,8 +454,14 @@ export default async function ManagerLaporanPage({
             <h3 className="text-base sm:text-lg font-bold text-gray-800">
               Kitchen Performance
             </h3>
-            <span className="px-3 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-bold w-fit">
-              On Target
+            <span
+              className={`px-3 py-0.5 rounded-full text-xs font-bold w-fit ${
+                kitchenPerformance.onTarget
+                  ? "bg-green-100 text-green-700"
+                  : "bg-amber-100 text-amber-700"
+              }`}
+            >
+              {kitchenPerformance.onTarget ? "On Target" : "Watch"}
             </span>
           </div>
           <div className="p-3 border border-gray-200 rounded-xl mb-2">
@@ -420,7 +469,11 @@ export default async function ManagerLaporanPage({
               Average Preparation Time
             </p>
             <div className="flex flex-col sm:flex-row sm:items-end gap-2 mb-1">
-              <p className="text-2xl font-bold text-gray-800">12m 45d</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {kitchenPerformance.averagePreparationMinutes > 0
+                  ? `${kitchenPerformance.averagePreparationMinutes}m`
+                  : "0m"}
+              </p>
               <div className="flex-1 h-16 relative w-full sm:w-auto">
                 <svg
                   viewBox="0 0 200 96"
@@ -445,7 +498,9 @@ export default async function ManagerLaporanPage({
                 </svg>
               </div>
             </div>
-            <p className="text-[10px] text-gray-600">Target: {"<"} 15 menit</p>
+            <p className="text-[10px] text-gray-600">
+              Target: {"<"} 15 menit · Range aktif: {labelRange}
+            </p>
           </div>
           <div className="flex justify-between items-center px-1">
             <span className="text-xs text-gray-500">Orders Completed</span>
