@@ -2,10 +2,6 @@ import { NextResponse } from "next/server";
 import midtransClient from "midtrans-client";
 import { createClient } from "@supabase/supabase-js";
 
-console.log("SERVER KEY =", process.env.MIDTRANS_SERVER_KEY);
-console.log("CLIENT KEY =", process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY);
-console.log("Merchant ID:", process.env.MIDTRANS_SERVER_KEY);
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
