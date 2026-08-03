@@ -157,15 +157,15 @@ export default function StatusPesananPage() {
                 {riwayat.map((r: RiwayatPesanan) => {
                   const aktif = selectedId === r.id;
                   return (
-                    <button
-                      key={r.id}
-                      onClick={() => setSelectedId(r.id)}
-                      className={`w-full text-left rounded-xl border p-3 transition ${
-                        aktif
-                          ? "border-[#2F54EB] bg-blue-50/60 shadow-sm"
-                          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
+                    <div
+                        key={r.id}
+                        onClick={() => setSelectedId(r.id)}
+                        className={`w-full cursor-pointer text-left rounded-xl border p-3 transition ${
+                          aktif
+                            ? "border-[#2F54EB] bg-blue-50/60 shadow-sm"
+                            : "border-gray-100 hover:border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <div>
                           <p className="font-bold text-xs sm:text-sm text-black">
@@ -222,7 +222,7 @@ export default function StatusPesananPage() {
                           <Trash2 size={13} />
                         </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -312,9 +312,9 @@ export default function StatusPesananPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-12 gap-3 sm:gap-4">
-                  <div className="col-span-7">
-                    <TimelinePesanan />
+                <div className="grid grid-cols-12 gap-4 mt-4">
+                  <div className="col-span-12">
+                    <TimelinePesanan status={selected.status} />
                   </div>
                 </div>
               </>
@@ -345,10 +345,8 @@ export default function StatusPesananPage() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-12 gap-3 sm:gap-4">
-                  <div className="col-span-7">
-                    <TimelinePesanan />
-                  </div>
+                <div className="mt-4">
+                  <TimelinePesanan />
                 </div>
               </>
             )}

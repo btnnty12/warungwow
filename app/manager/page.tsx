@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+export const dynamic = "force-dynamic";
+
 import {
   Bell,
   Calendar,
@@ -293,7 +296,9 @@ export default async function ManagerPage() {
           <Hand size={22} className="text-yellow-500" strokeWidth={2} />
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <DateRangePicker mode="fixed-today" />
+          <Suspense fallback={<div className="text-xs text-gray-500">Memuat tanggal…</div>}>
+            <DateRangePicker mode="fixed-today" />
+          </Suspense>
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-xs">
             <Calendar size={14} className="text-gray-600" />
             <span className="text-gray-700 font-medium">{labelHariIni}</span>

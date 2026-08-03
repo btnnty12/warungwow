@@ -17,8 +17,13 @@ export default function DetailPesanan({
   orderCode,
   orderDate,
 }: DetailPesananProps) {
-  const displayOrderCode = orderCode || `WOW${Date.now().toString().slice(-6)}`;
-  const displayOrderDate = orderDate ? new Date(orderDate) : new Date();
+  const displayOrderCode = orderCode
+    ? orderCode.startsWith("WOW")
+      ? orderCode
+      : `WOW${orderCode}`
+    : "WOW------";
+
+  const displayOrderDate = orderDate ? new Date(orderDate) : null;
 
   return (
     <div className="border border-gray-200 rounded-2xl p-6 shadow-lg">
@@ -28,13 +33,18 @@ export default function DetailPesanan({
       </h2>
 
       <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
-        <span className="font-bold text-lg">Order #{displayOrderCode}</span>
         <span className="text-gray-500 text-sm">
-          {displayOrderDate.toLocaleDateString("id-ID")} |{" "}
-          {displayOrderDate.toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {displayOrderDate ? (
+            <>
+              {displayOrderDate.toLocaleDateString("id-ID")} |{" "}
+              {displayOrderDate.toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </>
+          ) : (
+            "-"
+          )}
         </span>
       </div>
 

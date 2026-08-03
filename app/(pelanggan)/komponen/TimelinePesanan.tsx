@@ -1,104 +1,99 @@
 "use client";
 
-import { Truck, CheckCircle2, Circle } from "lucide-react";
+import type { StatusPesanan } from "@/lib/useRiwayatPesanan";
 
-type Status =
-  | "diterima_dapur"
-  | "sedang_dibuat"
-  | "sedang_diantar"
-  | "selesai"
-  | "dibatalkan";
+type Props = {
+  status?: StatusPesanan;
+};
 
-interface TimelinePesananProps {
-  status?: Status;
-}
-
-const steps = [
-  { id: "diterima_dapur", label: "Diterima Dapur" },
-  { id: "sedang_dibuat", label: "Sedang Dibuat" },
-  { id: "sedang_diantar", label: "Sedang Diantar" },
-  { id: "selesai", label: "Selesai" },
-] as const;
+const steps: {
+  key: StatusPesanan;
+  label: string;
+  badge: string;
+}[] = [
+  {
+    key: "diterima_dapur",
+    label: "Diterima Dapur",
+    badge: "Sedang Diproses",
+  },
+  {
+    key: "sedang_dibuat",
+    label: "Sedang Dibuat",
+    badge: "Sedang Diproses",
+  },
+  {
+    key: "sedang_diantar",
+    label: "Sedang Diantar",
+    badge: "Sedang Diantar",
+  },
+  {
+    key: "selesai",
+    label: "Selesai",
+    badge: "Pesanan Selesai",
+  },
+];
 
 export default function TimelinePesanan({
   status = "diterima_dapur",
-}: TimelinePesananProps) {
-  if (status === "dibatalkan") {
-    return (
-      <div className="border border-red-200 rounded-2xl p-6 bg-white shadow-sm">
-        <h2 className="text-xl font-bold text-red-600">Pesanan Dibatalkan</h2>
-        <p className="text-gray-600 mt-2">Pesanan ini telah dibatalkan.</p>
-      </div>
-    );
-  }
-
-  const currentIndex = steps.findIndex((step) => step.id === status);
+}: Props) {
+  const currentIndex = steps.findIndex((s) => s.key === status);
   const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const progressWidth = `${(safeIndex / (steps.length - 1)) * 100}%`;
 
   return (
-    <div className="border border-gray-200 rounded-2xl p-6 sm:p-7 bg-white shadow-sm">
-      <h2 className="text-2xl font-bold text-[#2F54EB] flex items-center gap-2 mb-6">
-        <Truck size={28} />
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-6 w-full">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#2F54EB] mb-8">
         Track Pesanan Anda
       </h2>
 
-      <div className="relative max-w-4xl">
-        <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gray-200" />
+      <div className="relative">
+        <div className="absolute top-[14px] left-5 right-5 h-[3px] bg-gray-200 rounded-full"></div>
+        <div
+          className="absolute top-[14px] left-5 h-[3px] bg-[#f97316] rounded-full transition-all duration-300"
+          style={{ width: `calc(${progressWidth} - 0px)` }}
+        ></div>
 
-        {steps.map((step, index) => {
-          const selesai = index < safeIndex;
-          const aktif = index === safeIndex;
+        <div className="relative z-10 grid grid-cols-4 gap-2 items-start">
+          {steps.map((step, index) => {
+            const active = index <= safeIndex;
+            const current = index === safeIndex;
 
-          return (
-            <div key={step.id} className="relative flex items-start gap-4 pb-5 last:pb-0">
-              <div className="relative z-10 flex flex-col items-center">
+            return (
+              <div
+                key={step.key}
+                className="flex flex-col items-center text-center"
+              >
                 <div
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                    selesai
-                      ? "bg-green-500 text-white border-green-500"
-                      : aktif
-                        ? "bg-orange-100 text-orange-600 border-orange-300"
-                        : "bg-gray-100 text-gray-400 border-gray-300"
+                  className={`relative w-8 h-8 rounded-full border-[4px] flex items-center justify-center transition-all duration-300 ${
+                    active
+                      ? "bg-[#f97316] border-[#fed7aa]"
+                      : "bg-white border-gray-300"
                   }`}
                 >
-                  {selesai ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                </div>
-
-                {index < steps.length - 1 && (
-                  <div
-                    className={`w-0.5 h-10 mt-2 ${
-                      selesai ? "bg-green-500" : "bg-gray-200"
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      active ? "bg-white" : "bg-gray-300"
                     }`}
                   />
+                </div>
+
+                <p
+                  className={`mt-3 text-xs sm:text-sm font-semibold ${
+                    active ? "text-[#2F54EB]" : "text-gray-500"
+                  }`}
+                >
+                  {step.label}
+                </p>
+
+                {current && (
+                  <span className="mt-2 rounded-full bg-orange-100 text-orange-600 px-3 py-1 text-[10px] sm:text-xs font-semibold">
+                    {step.badge}
+                  </span>
                 )}
               </div>
-
-              <div className="flex-1 min-w-0 pt-1">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <p
-                    className={`font-semibold ${
-                      selesai || aktif ? "text-black" : "text-gray-500"
-                    }`}
-                  >
-                    {step.label}
-                  </p>
-
-                  {aktif && (
-                    <span className="inline-flex w-fit items-center rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold text-orange-700">
-                      Sedang Diproses
-                    </span>
-                  )}
-
-                  {selesai && (
-                    <span className="inline-flex w-fit items-center rounded-full bg-green-100 px-3 py-1 text-[11px] font-semibold text-green-700">
-                      Selesai
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,13 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { ItemKeranjang } from "./types";
 import { supabase } from "./supabase";
 
+export type StatusPesanan =
+  | "diterima_dapur"
+  | "sedang_dibuat"
+  | "sedang_diantar"
+  | "selesai"
+  | "dibatalkan";
+
 export type RiwayatPesanan = {
   id: string;
   nomorMeja: string;
@@ -12,7 +19,7 @@ export type RiwayatPesanan = {
   pajak: number;
   biayaLayanan: number;
   total: number;
-  status: string;
+  status: StatusPesanan;
   dibuatPada: number;
 };
 
@@ -21,7 +28,7 @@ type RiwayatContextType = {
   simpanRiwayat: (p: Omit<RiwayatPesanan, "id" | "dibuatPada">) => RiwayatPesanan;
   pesanLagi: (id: string) => void;
   hapusRiwayat: (id: string) => void;
-  updateStatus: (id: string, status: string) => void;
+  updateStatus: (id: string, status: StatusPesanan) => void;
   pesananTerbaru: RiwayatPesanan | null;
 };
 
@@ -89,7 +96,7 @@ export function RiwayatPesananProvider({ children }: { children: ReactNode }) {
           biayaLayanan: 0,
           total: Number(p.total_harga),
 
-          status: p.status_pesanan,
+          status: p.status_pesanan as StatusPesanan,
 
           dibuatPada:
             new Date(p.dibuat_pada).getTime(),
@@ -139,9 +146,16 @@ export function RiwayatPesananProvider({ children }: { children: ReactNode }) {
     persist(riwayat.filter((r) => r.id !== id));
   };
 
-  const updateStatus = (id: string, status: string) => {
+  const updateStatus = (id: string, status: StatusPesanan) => {
     persist(
-      riwayat.map((r) => (r.id === id ? { ...r, status } : r))
+      riwayat.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status,
+            }
+          : r
+      )
     );
   };
 

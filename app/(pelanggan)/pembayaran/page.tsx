@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useKeranjang } from "@/lib/useKeranjang";
 import { useMeja } from "@/lib/useMeja";
@@ -31,7 +31,7 @@ type InvoiceRow = {
   status_pesanan: StatusPesanan;
 };
 
-export default function PembayaranPage() {
+function PembayaranPageContent() {
   const searchParams = useSearchParams();
   const { keranjang } = useKeranjang();
   const { nomorMeja } = useMeja();
@@ -216,5 +216,19 @@ export default function PembayaranPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function PembayaranPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-[#F7F7F7] flex items-center justify-center">
+        <div className="bg-white rounded-2xl px-8 py-6 shadow-lg text-center">
+          <p className="font-semibold text-black">Memuat invoice...</p>
+        </div>
+      </main>
+    }>
+      <PembayaranPageContent />
+    </Suspense>
   );
 }

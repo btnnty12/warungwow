@@ -883,7 +883,7 @@ export default function ManagerMenuPage() {
                 </div>
               )}
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+                <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5">
                   Nama Produk <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -893,12 +893,12 @@ export default function ManagerMenuPage() {
                     setForm({ ...form, nama_produk: e.target.value })
                   }
                   placeholder="Misal: Nasi Goreng Spesial"
-                  className="w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
+                  className="w-full px-3.5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5 flex items-center justify-between gap-2">
+                  <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5 flex items-center justify-between gap-2">
                     <span>
                       Kategori <span className="text-red-500">*</span>
                     </span>
@@ -929,7 +929,7 @@ export default function ManagerMenuPage() {
                       onChange={(e) =>
                         setForm({ ...form, kategori_id: e.target.value })
                       }
-                      className="w-full pl-3.5 pr-10 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] appearance-none cursor-pointer"
+                      className="w-full pl-3.5 pr-10 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] appearance-none cursor-pointer"
                     >
                       <option value="">-- Pilih --</option>
                       {(kategori || []).map((k) => (
@@ -950,7 +950,7 @@ export default function ManagerMenuPage() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+                  <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5">
                     Status
                   </label>
                   <div className="relative">
@@ -962,7 +962,7 @@ export default function ManagerMenuPage() {
                           status: e.target.value as "tersedia" | "habis",
                         })
                       }
-                      className="w-full pl-3.5 pr-10 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] appearance-none cursor-pointer"
+                      className="w-full pl-3.5 pr-10 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] appearance-none cursor-pointer"
                     >
                       <option value="tersedia">Tersedia</option>
                       <option value="habis">Habis</option>
@@ -975,7 +975,7 @@ export default function ManagerMenuPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+                  <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5">
                     Harga (Rp) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -984,11 +984,11 @@ export default function ManagerMenuPage() {
                     value={form.harga}
                     onChange={(e) => setForm({ ...form, harga: e.target.value })}
                     placeholder="Misal: 25000"
-                    className="w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
+                    className="w-full px-3.5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+                  <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5">
                     Stok
                   </label>
                   <input
@@ -997,12 +997,12 @@ export default function ManagerMenuPage() {
                     value={form.stok}
                     onChange={(e) => setForm({ ...form, stok: e.target.value })}
                     placeholder="0"
-                    className="w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
+                    className="w-full px-3.5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5 flex items-center justify-between gap-2">
                   <span className="flex items-center gap-1.5">
                     <ImageIcon size={14} /> Gambar Produk
                   </span>
@@ -1194,7 +1194,7 @@ export default function ManagerMenuPage() {
                         setForm({ ...form, gambar: e.target.value })
                       }
                       placeholder="https://... atau /warung.png (opsional)"
-                      className="w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
+                      className="w-full px-3.5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F]"
                     />
                     {form.gambar.trim() && (
                       <div className="w-full h-24 rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
@@ -1214,7 +1214,7 @@ export default function ManagerMenuPage() {
                 )}
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-semibold text-gray-800 mb-1.5">
+                <label className="block text-xs sm:text-sm text-gray-900 font-bold mb-1.5">
                   Deskripsi
                 </label>
                 <textarea
@@ -1224,7 +1224,7 @@ export default function ManagerMenuPage() {
                   }
                   rows={3}
                   placeholder="Deskripsi singkat produk (opsional)"
-                  className="w-full px-3.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] resize-none"
+                  className="w-full px-3.5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-900 placeholder:text-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#558B2F]/30 focus:border-[#558B2F] resize-none"
                 />
               </div>
             </div>
