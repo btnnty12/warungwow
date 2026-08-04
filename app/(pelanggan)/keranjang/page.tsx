@@ -63,12 +63,22 @@ export default function KeranjangPage() {
 
       console.log("SESSION:", authData.session);
 
+      const { data: meja, error: errorMeja } = await supabase
+        .from("meja")
+        .select("id")
+        .eq("nomor_meja", nomorMeja)
+        .single();
+
+      if (errorMeja || !meja) {
+        throw new Error("Meja tidak ditemukan.");
+      }
+
       const { data: pesananBaru, error: errorPesanan } = await supabase
         .from("pesanan")
         .insert([
           {
             kode_pesanan: kodePesanan,
-            meja_id: null,
+            meja_id: meja.id,
             nama_pelanggan: namaPelanggan.trim(),
             no_hp: noHp.trim(),
             total_harga: Number(totalPembayaran.toFixed(0)),

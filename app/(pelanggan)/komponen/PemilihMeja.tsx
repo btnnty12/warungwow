@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
 import { useMeja } from "@/lib/useMeja";
 
 type PemilihMejaProps = {
@@ -8,7 +9,13 @@ type PemilihMejaProps = {
 };
 
 export default function PemilihMeja({ initialMeja }: PemilihMejaProps) {
-const { nomorMeja, setNomorMeja } = useMeja();
+  const { nomorMeja, setNomorMeja } = useMeja();
+
+  useEffect(() => {
+    if (initialMeja) {
+      setNomorMeja(initialMeja);
+    }
+  }, [initialMeja, setNomorMeja]);
 
   return (
     <div className="mt-8">
